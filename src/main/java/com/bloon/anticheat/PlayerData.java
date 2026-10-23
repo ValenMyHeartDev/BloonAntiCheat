@@ -2,14 +2,10 @@ package com.bloon.anticheat;
 
 import java.util.UUID;
 
-/**
- * Datos temporales por jugador para acumular violaciones de TriggerBot.
- */
 public final class PlayerData {
     private final UUID uuid;
     private double triggerBotBuffer;
 
-    // Constructor que requiere Main.java
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
     }
@@ -17,8 +13,6 @@ public final class PlayerData {
     public UUID getUuid() {
         return uuid;
     }
-
-    // --- Métodos compatibles con TriggerCheck.java ---
 
     public double getTriggerBuffer() {
         return triggerBotBuffer;
@@ -38,23 +32,5 @@ public final class PlayerData {
 
     public void resetBuffer() {
         triggerBotBuffer = 0;
-    }
-
-    // --- Alias de conveniencia por si se usan los nombres largos ---
-
-    public double getTriggerBotBuffer() {
-        return getTriggerBuffer();
-    }
-
-    public void addTriggerBotViolation(double amount) {
-        addTriggerBuffer(amount);
-    }
-
-    public void reduceTriggerBotBuffer(double amount) {
-        reduceTriggerBuffer(amount);
-    }
-
-    public void resetTriggerBotBuffer() {
-        resetBuffer();
     }
 }
