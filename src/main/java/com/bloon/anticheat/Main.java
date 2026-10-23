@@ -18,8 +18,8 @@ public class Main extends JavaPlugin {
             getCommand("bloon").setExecutor(new BloonCommand(this));
         }
 
-        // Registrar los Listeners de eventos (Menú y Detector de Hacks)
-        getServer().getPluginManager().registerEvents(new MenuListener(), this);
+        // Registrar los Listeners de eventos
+        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new TriggerCheck(this), this);
 
         getLogger().info("¡Bloon AntiCheat V1 cargado y activado correctamente con TriggerBot!");
