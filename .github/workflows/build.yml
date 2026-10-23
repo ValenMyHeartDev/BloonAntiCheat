@@ -1,0 +1,26 @@
+name: Compilar Bloon AntiCheat
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v3
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Compilar con Maven
+        run: mvn clean package --file pom.xml
+
+      - name: Guardar Archivo JAR
+        uses: actions/upload-artifact@v3
+        with:
+          name: BloonAntiCheat-Jar
+          path: target/*.jar
