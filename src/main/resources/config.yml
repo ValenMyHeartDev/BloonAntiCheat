@@ -1,0 +1,23 @@
+# Bloon AntiCheat V1
+punishments:
+  triggerbot:
+    enabled: true
+    buffer-threshold: 10
+    command: "kick %player% TriggerBot detectado"
+
+checks:
+  TriggerBot:
+    enabled: false
+    # Placeholder configuration for a future TriggerBot detection check.
+    buffer-decay-per-second: 0.25
+
+# Entries shown in /bloon sanciones. Keys are unique IDs.
+sanctions:
+  ejemplo:
+    name: "&cEjemplo de sanción"
+    material: PLAYER_HEAD
+    owner: Notch
+    lore:
+      - "&7Ejemplo de entrada"
+      - "&eConfigúrala en config.yml"
+    command: "say Sanción de ejemplo para %player%"
