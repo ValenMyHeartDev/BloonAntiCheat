@@ -16,14 +16,22 @@ import java.util.List;
 
 public class PunishmentMenu {
 
+    // Konstanta TITLE pikeun dipaké ku MenuListener
+    public static final String TITLE = ChatColor.DARK_GRAY + "Bloon AntiCheat " + ChatColor.DARK_RED + "» Sanciones";
+
     private final JavaPlugin plugin;
 
     public PunishmentMenu(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
+    // Metodeu open() anu dipaké ku BloonCommand
+    public void open(Player admin) {
+        openMenu(admin);
+    }
+
     public void openMenu(Player admin) {
-        Inventory gui = Bukkit.createInventory(null, 54, ChatColor.DARK_GRAY + "Bloon AntiCheat " + ChatColor.DARK_RED + "» Sanciones");
+        Inventory gui = Bukkit.createInventory(null, 54, TITLE);
 
         FileConfiguration config = plugin.getConfig();
         if (config.isConfigurationSection("sanctions")) {
