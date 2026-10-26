@@ -26,7 +26,7 @@ public class BloonGUIListener implements Listener {
     private static class TargetSelection {
         UUID targetUUID;
         String targetName;
-        String actionType; // "BAN" o "MUTE"
+        String actionType;
         String duration;
     }
 
@@ -45,17 +45,19 @@ public class BloonGUIListener implements Listener {
             ItemStack clicked = event.getCurrentItem();
             if (clicked == null || clicked.getType() == Material.AIR) return;
 
-            // 1. Menú Principal de Sanciones (Elección entre Bans y Mutes activos)
+            // 1. Menú Principal de Sanciones (3 opciones: Bans, IPs, Mutes)
             if (title.contains("Gestión de Sanciones")) {
                 if (clicked.getType() == Material.REDSTONE_BLOCK) {
                     openBannedListMenu(staff);
+                } else if (clicked.getType() == Material.IRON_BARS) {
+                    openBannedIPsMenu(staff);
                 } else if (clicked.getType() == Material.YELLOW_WOOL) {
                     openMutedListMenu(staff);
                 }
                 return;
             }
 
-            // 2. Submenú: Lista de Baneados (Clic para Desbanear)
+            // 2. Submenú: Lista de Baneados (Clic para Desbanear Jugador)
             if (title.contains("Jugadores Baneados")) {
                 if (clicked.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) clicked.getItemMeta();
@@ -69,7 +71,21 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 3. Submenú: Lista de Muteados (Clic para Desmutear)
+            // 3. Submenú: Lista de IPs Baneadas (Clic para Desbanear IP)
+            if (title.contains("IPs Baneadas")) {
+                if (clicked.getType() == Material.PAPER) {
+                    ItemMeta meta = clicked.getItemMeta();
+                    if (meta != null && meta.getDisplayName() != null) {
+                        String ip = meta.getDisplayName().replace("§cIP: ", "").trim();
+                        SanctionsManager.unbanIP(ip);
+                        staff.sendMessage("§a[BloonAC] ¡Has desbaneado la IP: §e" + ip + " §aexitosamente!");
+                        staff.closeInventory();
+                    }
+                }
+                return;
+            }
+
+            // 4. Submenú: Lista de Muteados (Clic para Desmutear)
             if (title.contains("Jugadores Muteados")) {
                 if (clicked.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) clicked.getItemMeta();
@@ -83,7 +99,7 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 4. Menú: Seleccionar Jugador para sancionar
+            // 5. Menú: Seleccionar Jugador para sancionar
             if (title.contains("Seleccionar Jugador")) {
                 if (clicked.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) clicked.getItemMeta();
@@ -100,7 +116,7 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 5. Menú: Elegir Acción (Ban o Mute)
+            // 6. Menú: Elegir Acción
             if (title.contains("Elegir Sanción")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
@@ -115,7 +131,7 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 6. Menú: Seleccionar Duración
+            // 7. Menú: Seleccionar Duración
             if (title.contains("Seleccionar Duración")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
@@ -128,7 +144,7 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 7. Menú: Seleccionar Razón
+            // 8. Menú: Seleccionar Razón
             if (title.contains("Seleccionar Razón")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
@@ -138,10 +154,10 @@ public class BloonGUIListener implements Listener {
                     String reason = meta.getDisplayName();
                     if ("BAN".equals(sel.actionType)) {
                         SanctionsManager.banPlayer(sel.targetUUID, sel.targetName, reason, sel.duration);
-                        staff.sendMessage("§a[BloonAC] ¡Jugador " + sel.targetName + " baneado por " + reason + " (" + sel.duration + ")!");
+                        staff.sendMessage("§a[BloonAC] ¡Jugador " + sel.targetName + " baneado (Nombre e IP) por " + reason + "!");
                     } else {
                         SanctionsManager.mutePlayer(sel.targetUUID, sel.targetName, reason, sel.duration);
-                        staff.sendMessage("§a[BloonAC] ¡Jugador " + sel.targetName + " muteado por " + reason + " (" + sel.duration + ")!");
+                        staff.sendMessage("§a[BloonAC] ¡Jugador " + sel.targetName + " muteado por " + reason + "!");
                     }
                     staff.closeInventory();
                     targetCache.remove(staff.getUniqueId());
@@ -157,23 +173,35 @@ public class BloonGUIListener implements Listener {
         ItemStack bans = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta bm = bans.getItemMeta();
         if (bm != null) {
-            bm.setDisplayName("§c§lVer Jugadores Baneados");
+            bm.setDisplayName("§c§lJugadores Baneados");
             List<String> lore = new ArrayList<>();
-            lore.add("§7Clic para ver la lista y desbanear.");
+            lore.add("§7Clic para ver jugadores y desbanear.");
             bm.setLore(lore);
             bans.setItemMeta(bm);
         }
-        inv.setItem(11, bans);
+        inv.setItem(10, bans);
+
+        ItemStack ipBans = new ItemStack(Material.IRON_BARS);
+        ItemMeta im = ipBans.getItemMeta();
+        if (im != null) {
+            im.setDisplayName("§c§lIPs Baneadas");
+            List<String> lore = new ArrayList<>();
+            lore.add("§7Clic para ver IPs bloqueadas y desbanearlas.");
+            im.setLore(lore);
+            ipBans.setItemMeta(im);
+        }
+        inv.setItem(13, ipBans);
 
         ItemStack mutes = new ItemStack(Material.YELLOW_WOOL);
         ItemMeta mm = mutes.getItemMeta();
         if (mm != null) {
-            mm.setDisplayName("§e§lVer Jugadores Muteados");
+            mm.setDisplayName("§e§lJugadores Muteados");
             List<String> lore = new ArrayList<>();
-            lore.add("§7Clic para ver la lista y desmutear.");
+            lore.add("§7Clic para ver muteados y desmutear.");
+            mm.setLore(lore);
             mutes.setItemMeta(mm);
         }
-        inv.setItem(15, mutes);
+        inv.setItem(16, mutes);
 
         staff.openInventory(inv);
     }
@@ -191,12 +219,37 @@ public class BloonGUIListener implements Listener {
                 List<String> lore = new ArrayList<>();
                 lore.add("§7Duración: §e" + data.getDuration());
                 lore.add("§7Razón: §f" + data.getReason());
+                lore.add("§7IP asociada: §8" + (data.getIp() != null ? data.getIp() : "Ninguna"));
                 lore.add("");
                 lore.add("§a¡Haz clic para DESBANEAR!");
                 meta.setLore(lore);
                 skull.setItemMeta(meta);
             }
             inv.addItem(skull);
+        }
+        staff.openInventory(inv);
+    }
+
+    public static void openBannedIPsMenu(Player staff) {
+        Inventory inv = Bukkit.createInventory(null, 36, "§8[§cBloonAC§8] IPs Baneadas");
+        Map<String, SanctionsManager.SanctionData> ipBans = SanctionsManager.getBannedIPs();
+
+        for (SanctionsManager.SanctionData data : ipBans.values()) {
+            if (data.getIp() == null) continue;
+            ItemStack paper = new ItemStack(Material.PAPER);
+            ItemMeta meta = paper.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§cIP: " + data.getIp());
+                List<String> lore = new ArrayList<>();
+                lore.add("§7Usuario original: §e" + data.getPlayerName());
+                lore.add("§7Razón: §f" + data.getReason());
+                lore.add("§7Duración: §e" + data.getDuration());
+                lore.add("");
+                lore.add("§a¡Haz clic para DESBANEAR ESTA IP!");
+                meta.setLore(lore);
+                paper.setItemMeta(meta);
+            }
+            inv.addItem(paper);
         }
         staff.openInventory(inv);
     }
