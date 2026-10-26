@@ -2,7 +2,6 @@ package com.bloon.anticheat;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -105,6 +104,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             lore.add("§7Módulo Fly: §aActivo");
             lore.add("§7Módulo ClickTP: §aActivo");
             lore.add("§7Módulo Criticals: §aActivo");
+            
             meta.setLore(lore);
             info.setItemMeta(meta);
         }
