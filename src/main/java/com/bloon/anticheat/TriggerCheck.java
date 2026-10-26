@@ -31,19 +31,20 @@ public class TriggerCheck implements Listener {
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
         if (data == null) return;
 
-        data.addTriggerBuffer(1.0);
+        // Aumentamos la sensibilidad sumando peso por cada clic de combate
+        data.addTriggerBuffer(2.5); 
         double currentBuffer = data.getTriggerBuffer();
 
-        double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 10.0);
+        // Umbral más bajo para una detección mucho más rápida y estricta
+        double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 6.0);
 
-        // Si supera el límite de sospecha
         if (currentBuffer >= threshold) {
-            // 1. CANCELAR EL GOLPE (El golpe no contará ni infligirá daño)
+            // Cancela el daño y el golpe para que no tenga efecto
             event.setCancelled(true);
 
-            AlertsUtil.sendAlert(player, "TriggerBot", "Golpe bloqueado (Buffer: " + currentBuffer + ")");
+            AlertsUtil.sendAlert(player, "TriggerBot", "Ataque sospechoso bloqueado (Buffer: " + String.format("%.1f", currentBuffer) + ")");
 
-            // Reiniciamos o reducimos el buffer tras anular el golpe
+            // Reiniciar el buffer tras la sanción
             data.setTriggerBuffer(0.0);
         }
     }
