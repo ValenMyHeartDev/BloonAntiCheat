@@ -41,23 +41,26 @@ public class TriggerCheck implements Listener {
 
         int buffer = triggerBuffer.getOrDefault(uuid, 0);
 
-        // Si el intervalo entre golpes es inferior a 130ms de forma constante (velocidad robótica)
-        if (diff < 130 && diff > 0) {
-            buffer += 2;
-        } else if (diff >= 130 && diff < 250) {
+        // Sensibilidad aumentada: Margen de milisegundos más amplio y mayor ganancia de búfer
+        if (diff < 180 && diff > 0) {
+            buffer += 3; // Sube mucho más rápido ante cualquier patrón constante
+        } else if (diff >= 180 && diff < 300) {
             buffer += 1;
         } else {
-            buffer = Math.max(0, buffer - 2);
+            // Decaimiento lento para retener la sospecha en tramposos
+            buffer = Math.max(0, buffer - 1);
         }
 
         triggerBuffer.put(uuid, buffer);
 
-        int threshold = 5;
+        // Umbral ultrabajo: Con apenas 3 puntos acumulados salta la alerta y el bloqueo
+        int threshold = 3;
 
         if (buffer >= threshold) {
             event.setCancelled(true);
 
-            AlertsUtil.AlertType alertType = (diff < 70) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            // Alerta inmediata de nivel V si es muy rápido, o P
+            AlertsUtil.AlertType alertType = (diff < 90) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
             AlertsUtil.sendAlert(
                 player, 
@@ -66,7 +69,8 @@ public class TriggerCheck implements Listener {
                 alertType
             );
 
-            triggerBuffer.put(uuid, 2);
+            // Reseteo parcial para continuar frenando golpes consecutivos
+            triggerBuffer.put(uuid, 1);
         }
     }
 }
