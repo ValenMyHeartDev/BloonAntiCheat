@@ -9,9 +9,14 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import java.util.HashMap;
+import java.util.UUID;
+
 public class FlyCheck implements Listener {
 
     private final Main plugin;
+    // Control de ticks en el aire para evitar falsos positivos al saltar
+    private final HashMap<UUID, Integer> airTicks = new HashMap<>();
 
     public FlyCheck(Main plugin) {
         this.plugin = plugin;
@@ -21,8 +26,8 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        // Si el jugador es admin/bypass o tiene permitido el modo vuelo/elytra/vehículo legítimo
         if (player.hasPermission("bloon.bypass") || player.getAllowFlight() || player.isInsideVehicle() || player.isGliding()) {
+            airTicks.remove(player.getUniqueId());
             return;
         }
 
@@ -31,25 +36,28 @@ public class FlyCheck implements Listener {
 
         Location from = event.getFrom();
         Location to = event.getTo();
-
         if (to == null) return;
 
         double deltaY = to.getY() - from.getY();
-        
-        // Distancia horizontal (Ejes X y Z)
-        double distanceXZ = Math.sqrt(Math.pow(to.getX() - from.getX(), 2) + Math.pow(to.getZ() - from.getZ(), 2));
+        UUID uuid = player.getUniqueId();
 
-        // DETECCIÓN 1: Flotar o moverse en el aire sin estar sobre un bloque (Fly / AirWalk / Glide)
-        boolean isAirborne = !player.isOnGround() && player.getFallDistance() == 0;
+        // Si el jugador está tocando el suelo, reseteamos su contador de aire
+        if (player.isOnGround() || from.getBlock().isLiquid() || to.getBlock().isLiquid()) {
+            airTicks.put(uuid, 0);
+            return;
+        }
 
-        // Si intenta elevarse sin tocar el suelo O se desplaza horizontalmente flotando
-        if (isAirborne && (deltaY >= 0 || distanceXZ > 0.15)) {
+        // Si está en el aire, aumentamos el contador de ticks suspendido
+        int ticks = airTicks.getOrDefault(uuid, 0) + 1;
+        airTicks.put(uuid, ticks);
+
+        // Un salto legítimo dura pocos ticks subiendo y luego cae. 
+        // Si lleva más de 4 ticks seguidos en el aire sin tocar el suelo y sin caer (flotando o subiendo con fly), se detecta.
+        if (ticks > 4 && deltaY >= -0.08) {
             event.setCancelled(true);
-            
-            // Rebobinar al jugador a su posición previa en el suelo para frenar el desplazamiento
             player.teleport(from);
 
-            String message = "[BloonAC] " + player.getName() + " bloqueado por Fly / Glide (XZ: " + String.format("%.2f", distanceXZ) + "m | Y: " + String.format("%.2f", deltaY) + ")";
+            String message = "[BloonAC] " + player.getName() + " falló Fly / Levitación (Ticks en aire: " + ticks + ")";
             Bukkit.getLogger().info(message);
 
             for (Player staff : Bukkit.getOnlinePlayers()) {
