@@ -33,7 +33,6 @@ public class TriggerCheck implements Listener {
 
         FileConfiguration config = plugin.getConfig();
         
-        // Verificamos si el autoclicker o triggerbot están habilitados en la config
         boolean autoClickerEnabled = config.getBoolean("checks.autoclicker.enabled", true);
         boolean triggerBotEnabled = config.getBoolean("checks.TriggerBot.enabled", true) || 
                                     config.getBoolean("punishments.triggerbot.enabled", true);
@@ -46,20 +45,24 @@ public class TriggerCheck implements Listener {
         List<Long> timestamps = clickTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
         timestamps.add(now);
 
-        // Limpiamos los clics de hace más de 1 segundo para obtener los CPS reales exactos
         timestamps.removeIf(time -> now - time > 1000);
 
         int currentCPS = timestamps.size();
-        
-        // Obtenemos el límite máximo de CPS definido en tu config.yml (por defecto 18)
         int maxAllowedCPS = config.getInt("checks.autoclicker.max-cps", 18);
 
         if (currentCPS > maxAllowedCPS) {
             event.setCancelled(true);
 
-            AlertsUtil.sendAlert(player, "AutoClicker / TriggerBot", "CPS excesivos detectados (" + currentCPS + " / " + maxAllowedCPS + " máx)");
+            // Si supera por mucho el límite (>= 25 CPS) se marca como V (Cheat Confirmado), sino P (Posiblemente)
+            AlertsUtil.AlertType alertType = (currentCPS >= 25) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
-            // Limpiamos parcialmente la lista para evitar bucles de alertas masivas en el mismo segundo
+            AlertsUtil.sendAlert(
+                player, 
+                "AutoClicker / TriggerBot", 
+                "CPS: " + currentCPS + " / " + maxAllowedCPS + " máx", 
+                alertType
+            );
+
             timestamps.clear();
         }
     }
