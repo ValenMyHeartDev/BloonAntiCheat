@@ -14,6 +14,7 @@ public class TriggerCheck implements Listener {
 
     private final Main plugin;
     private final HashMap<UUID, Long> lastAttackTime = new HashMap<>();
+    private final HashMap<UUID, Integer> rapidHitsCounter = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
@@ -32,45 +33,37 @@ public class TriggerCheck implements Listener {
             return;
         }
 
-        PlayerData data = plugin.getPlayerData(player.getUniqueId());
-        if (data == null) return;
-
         long currentTime = System.currentTimeMillis();
         long lastTime = lastAttackTime.getOrDefault(player.getUniqueId(), 0L);
         long diff = currentTime - lastTime;
         lastAttackTime.put(player.getUniqueId(), currentTime);
 
-        double currentBuffer = data.getTriggerBuffer();
-
-        // Si pasa más de 800ms sin atacar, limpiamos parte del búfer acumulado
-        if (diff > 800) {
-            currentBuffer = Math.max(0.0, currentBuffer - 2.0);
+        // Si el jugador tarda más de 600ms en dar el siguiente golpe, se resetea el contador (PvP normal)
+        if (diff > 600) {
+            rapidHitsCounter.put(player.getUniqueId(), 0);
+            return;
         }
 
-        // Detección escalonada más estricta para tramposos
-        if (diff < 70) {
-            // Velocidad inhumana (Macros / TriggerBot / AutoClicker rápido): sube muy rápido
-            currentBuffer += 2.5;
-        } else if (diff < 120) {
-            // Ritmo sospechosamente rápido constante
-            currentBuffer += 1.5;
+        // Un TriggerBot o AutoClicker ataca a intervalos extremadamente cortos y automatizados (< 90ms)
+        if (diff < 90) {
+            int count = rapidHitsCounter.getOrDefault(player.getUniqueId(), 0) + 1;
+            rapidHitsCounter.put(player.getUniqueId(), count);
+
+            // Con apenas 3 golpes consecutivos a velocidad de máquina, bloquea el ataque y avisa al instante
+            if (count >= 3) {
+                event.setCancelled(true);
+
+                AlertsUtil.sendAlert(player, "TriggerBot", "Ataque automatizado bloqueado (Intervalo: " + diff + "ms)");
+                
+                // Reiniciamos el contador tras la sanción
+                rapidHitsCounter.put(player.getUniqueId(), 0);
+            }
         } else {
-            // Clics normales / PvP legal: reducimos el búfer para proteger los hits limpios
-            currentBuffer = Math.max(0.0, currentBuffer - 0.5);
-        }
-
-        data.setTriggerBuffer(currentBuffer);
-
-        // Umbral optimizado a 4.5 para que salte con rapidez ante trampas
-        double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 4.5);
-
-        if (currentBuffer >= threshold) {
-            event.setCancelled(true);
-
-            AlertsUtil.sendAlert(player, "TriggerBot", "Ataque no legítimo bloqueado (Buffer: " + String.format("%.1f", currentBuffer) + ")");
-
-            // Reseteamos parcialmente el búfer para seguir frenando si continúan
-            data.setTriggerBuffer(1.0);
+            // Si el intervalo es humano (>= 90ms), reducimos el contador de sospecha gradualmente
+            int count = rapidHitsCounter.getOrDefault(player.getUniqueId(), 0);
+            if (count > 0) {
+                rapidHitsCounter.put(player.getUniqueId(), count - 1);
+            }
         }
     }
 }
