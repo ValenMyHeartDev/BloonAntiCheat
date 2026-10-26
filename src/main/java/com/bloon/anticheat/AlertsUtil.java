@@ -1,46 +1,28 @@
 package com.bloon.anticheat;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public class AlertsUtil {
 
     public enum AlertType {
-        F("&e[F - No Confirmable]"),
-        P("&6[P - Posiblemente]"),
-        V("&c[V - Cheat Confirmado]");
-
-        private final String prefix;
-
-        AlertType(String prefix) {
-            this.prefix = prefix;
-        }
-
-        public String getPrefix() {
-            return prefix;
-        }
+        F, // Flag (Sospecha / Bajo)
+        P, // Punishment / Probable
+        V  // Violation / Inmediato
     }
 
-    // Método principal con 4 parámetros (incluye el nivel de alerta)
     public static void sendAlert(Player player, String checkName, String details, AlertType type) {
-        String message = ChatColor.translateAlternateColorCodes('&', 
-            "&8[&cBloonAC&8] " + type.getPrefix() + " &f" + player.getName() + " &7falló &c" + checkName + " &7(" + details + ")"
-        );
+        String prefix = "[BloonAC] ";
+        String message = prefix + "§c" + player.getName() + " §7falló §e" + checkName + " §8[" + type.name() + "] §7- " + details;
+        
+        // Enviar a consola
+        Bukkit.getLogger().info(message);
 
-        // Enviar a la consola del servidor
-        Bukkit.getConsoleSender().sendMessage(message);
-
-        // Enviar a los miembros del staff con el permiso correspondiente
+        // Enviar a administradores con el permiso
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.hasPermission("bloon.alerts")) {
                 staff.sendMessage(message);
             }
         }
-    }
-
-    // SOBRECARGA: Método con 3 parámetros para evitar errores en clases que no especifican el tipo
-    public static void sendAlert(Player player, String checkName, String details) {
-        sendAlert(player, checkName, details, AlertType.P);
     }
 }
