@@ -5,26 +5,101 @@
 settings:
   prefix: "&8[&cBloonAC&8]"
 
+# Configuración global de castigos y sanciones automáticas
 punishments:
   triggerbot:
     enabled: true
-    buffer-threshold: 6.0
+    buffer-threshold: 3.0
     command: "kick %player% TriggerBot detectado"
-
-checks:
-  TriggerBot:
-    enabled: true
-    buffer-decay-per-second: 0.25
   autoclicker:
     enabled: true
-    max-cps: 18
+    command: "kick %player% AutoClicker detectado"
   fly:
     enabled: true
-  reach:
-    enabled: true
-    max-distance: 4.2
+    command: "kick %player% Fly/Vuelo ilegal detectado"
 
-# Entradas visuales que aparecen en /bloon menu o /bloon sanciones.
+# Módulos de Verificación y Hacks Soportados
+checks:
+  # -------------------------------------------------
+  # 1. COMBAT CHECKS (Hacks de Combate y PvP Moderno)
+  # -------------------------------------------------
+  combat:
+    killaura: true
+    aimassist: true
+    autoclicker:
+      enabled: true
+      max-cps: 18
+    reach:
+      enabled: true
+      max-distance: 4.2
+    velocity: true
+    antiknockback: true
+    criticals: true
+    TriggerBot:
+      enabled: true
+      buffer-decay-per-second: 0.25
+    crystalaura: true
+    anchoraura: true      # Detección de Respawn Anchors automáticos
+    bedaura: true         # Detección de Camas explosivas automáticas
+    shieldbreak: true     # Detección de ruptura de escudo instantánea
+    autototem: true
+    autoarmor: true
+
+  # -------------------------------------------------
+  # 2. MOVEMENT CHECKS (Hacks de Movimiento y Física)
+  # -------------------------------------------------
+  movement:
+    fly:
+      enabled: true
+    speed: true
+    timer: true
+    nofall: true
+    step: true
+    longjump: true
+    spider: true
+    phase: true
+    noslow: true
+    scaffold: true
+    blink: true
+    packetfly: true
+
+  # -------------------------------------------------
+  # 3. PLAYER CHECKS (Interacciones del Jugador)
+  # -------------------------------------------------
+  player:
+    fastplace: true
+    fastbreak: true
+    nuker: true
+    xray: true
+    freecam: true
+
+  # -------------------------------------------------
+  # 4. EXPLOITS & PACKETS (Seguridad del Servidor)
+  # -------------------------------------------------
+  exploits:
+    badpackets: true
+    pingspoof: true
+    groundspoof: true
+    rotationspoof: true
+    crash-exploit: true
+    packet-crash: true
+    nbt-exploit: true
+    chunk-crash: true
+    login-flood: true
+    dupe-exploit: true
+    command-injection: true
+    anticheat-bypass: true
+
+  # -------------------------------------------------
+  # 5. VISUALS (Módulos de Cliente / Opcionales)
+  # -------------------------------------------------
+  visuals:
+    playeresp: true
+    tracers: true
+
+# ---------------------------------------------------
+# SANCTION MENU CONFIGURATION (/bloon sanciones)
+# ---------------------------------------------------
 sanctions:
   ejemplo:
     name: "&cEjemplo de sanción"
