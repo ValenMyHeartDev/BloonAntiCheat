@@ -15,8 +15,7 @@ import java.util.UUID;
 public class FlyCheck implements Listener {
 
     private final Main plugin;
-    // Control de ticks en el aire para evitar falsos positivos al saltar
-    private final HashMap<UUID, Integer> airTicks = new HashMap<>();
+    private final HashMap<UUID, Double> lastY = new HashMap<>();
 
     public FlyCheck(Main plugin) {
         this.plugin = plugin;
@@ -26,8 +25,8 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("bloon.bypass") || player.getAllowFlight() || player.isInsideVehicle() || player.isGliding()) {
-            airTicks.remove(player.getUniqueId());
+        if (player.hasPermission("bloon.bypass") || player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming() || player.isRiptiding()) {
+            lastY.remove(player.getUniqueId());
             return;
         }
 
@@ -38,26 +37,25 @@ public class FlyCheck implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        double deltaY = to.getY() - from.getY();
-        UUID uuid = player.getUniqueId();
-
-        // Si el jugador está tocando el suelo, reseteamos su contador de aire
-        if (player.isOnGround() || from.getBlock().isLiquid() || to.getBlock().isLiquid()) {
-            airTicks.put(uuid, 0);
+        // Si está en el suelo, pisando agua, escaleras, lianas o demi-bloques, reseteamos y permitimos todo
+        if (player.isOnGround() || player.getLocation().getBlock().isLiquid() || from.getBlock().getType().name().contains("LADDER") || from.getBlock().getType().name().contains("VINE")) {
+            lastY.put(player.getUniqueId(), to.getY());
             return;
         }
 
-        // Si está en el aire, aumentamos el contador de ticks suspendido
-        int ticks = airTicks.getOrDefault(uuid, 0) + 1;
-        airTicks.put(uuid, ticks);
+        double dy = to.getY() - from.getY();
+        double previousDy = lastY.getOrDefault(player.getUniqueId(), 0.0);
+        
+        // La gravedad de Minecraft reduce el movimiento vertical en cada tick (~ -0.08 o más negativo al caer)
+        // Un salto legítimo empieza positivo y va desacelerando. El Fly mantiene una elevación o caída anormalmente constante.
+        boolean isFloating = (dy > -0.01 && dy < 0.1) && (previousDy > -0.01 && previousDy < 0.1);
+        boolean isIllegalAscent = dy > 0.42 && player.getFallDistance() == 0;
 
-        // Un salto legítimo dura pocos ticks subiendo y luego cae. 
-        // Si lleva más de 4 ticks seguidos en el aire sin tocar el suelo y sin caer (flotando o subiendo con fly), se detecta.
-        if (ticks > 4 && deltaY >= -0.08) {
+        if (isFloating || isIllegalAscent) {
             event.setCancelled(true);
             player.teleport(from);
 
-            String message = "[BloonAC] " + player.getName() + " falló Fly / Levitación (Ticks en aire: " + ticks + ")";
+            String message = "[BloonAC] " + player.getName() + " falló Fly (Anomalía física detectada)";
             Bukkit.getLogger().info(message);
 
             for (Player staff : Bukkit.getOnlinePlayers()) {
@@ -65,6 +63,8 @@ public class FlyCheck implements Listener {
                     staff.sendMessage("§c" + message);
                 }
             }
+        } else {
+            lastY.put(player.getUniqueId(), dy);
         }
     }
 }
