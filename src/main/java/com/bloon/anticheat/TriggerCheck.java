@@ -21,11 +21,6 @@ public class TriggerCheck implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onDamage(EntityDamageByEntityEntityEvent event) { // O EntityDamageByEntityEvent según tu imports
-        // Nota: Asegúrate de importar org.bukkit.event.entity.EntityDamageByEntityEvent
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
         Player player = (Player) event.getDamager();
@@ -46,25 +41,22 @@ public class TriggerCheck implements Listener {
 
         int buffer = triggerBuffer.getOrDefault(uuid, 0);
 
-        // Si el intervalo entre golpes es inferior a 130ms de forma constante (velocidad robótica/macro)
+        // Si el intervalo entre golpes es inferior a 130ms de forma constante (velocidad robótica)
         if (diff < 130 && diff > 0) {
             buffer += 2;
         } else if (diff >= 130 && diff < 250) {
-            buffer += 1; // Ritmo muy rápido sospechoso
+            buffer += 1;
         } else {
-            // Si el jugador golpea a ritmo normal humano, reducimos el búfer
             buffer = Math.max(0, buffer - 2);
         }
 
         triggerBuffer.put(uuid, buffer);
 
-        // Umbral de activación bajo para que salte rápido (puedes ajustarlo si deseas)
         int threshold = 5;
 
         if (buffer >= threshold) {
             event.setCancelled(true);
 
-            // Asignamos nivel V si el intervalo es inferior a 70ms (extremadamente inhumano), sino P
             AlertsUtil.AlertType alertType = (diff < 70) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
             AlertsUtil.sendAlert(
@@ -74,7 +66,6 @@ public class TriggerCheck implements Listener {
                 alertType
             );
 
-            // Reseteamos parcialmente el búfer
             triggerBuffer.put(uuid, 2);
         }
     }
