@@ -2,6 +2,7 @@ package com.bloon.anticheat;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,8 +38,14 @@ public class FlyCheck implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        // Si está en el suelo, pisando agua, escaleras, lianas o demi-bloques, reseteamos y permitimos todo
-        if (player.isOnGround() || player.getLocation().getBlock().isLiquid() || from.getBlock().getType().name().contains("LADDER") || from.getBlock().getType().name().contains("VINE")) {
+        // Si está en el suelo, líquidos o rodeado de bloques cercanos (esquinas / paredes), permitimos el movimiento para evitar falsos positivos
+        boolean nearBlocks = !player.getLocation().getBlock().getRelative(BlockFace.DOWN).isEmpty() ||
+                             !player.getLocation().getBlock().getRelative(BlockFace.NORTH).isEmpty() ||
+                             !player.getLocation().getBlock().getRelative(BlockFace.SOUTH).isEmpty() ||
+                             !player.getLocation().getBlock().getRelative(BlockFace.EAST).isEmpty() ||
+                             !player.getLocation().getBlock().getRelative(BlockFace.WEST).isEmpty();
+
+        if (player.isOnGround() || player.getLocation().getBlock().isLiquid() || (nearBlocks && to.getY() <= from.getY())) {
             lastY.put(player.getUniqueId(), to.getY());
             return;
         }
@@ -46,16 +53,15 @@ public class FlyCheck implements Listener {
         double dy = to.getY() - from.getY();
         double previousDy = lastY.getOrDefault(player.getUniqueId(), 0.0);
         
-        // La gravedad de Minecraft reduce el movimiento vertical en cada tick (~ -0.08 o más negativo al caer)
-        // Un salto legítimo empieza positivo y va desacelerando. El Fly mantiene una elevación o caída anormalmente constante.
-        boolean isFloating = (dy > -0.01 && dy < 0.1) && (previousDy > -0.01 && previousDy < 0.1);
+        // Detección estricta de vuelo estático sin colisión lateral legítima
+        boolean isFloating = (dy > -0.02 && dy < 0.08) && (previousDy > -0.02 && previousDy < 0.08) && !nearBlocks;
         boolean isIllegalAscent = dy > 0.42 && player.getFallDistance() == 0;
 
         if (isFloating || isIllegalAscent) {
             event.setCancelled(true);
             player.teleport(from);
 
-            String message = "[BloonAC] " + player.getName() + " falló Fly (Anomalía física detectada)";
+            String message = "[BloonAC] " + player.getName() + " falló Fly (Anomalía en aire/esquina)";
             Bukkit.getLogger().info(message);
 
             for (Player staff : Bukkit.getOnlinePlayers()) {
