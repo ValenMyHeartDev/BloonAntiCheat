@@ -40,14 +40,14 @@ public class PunishmentMenu {
             for (String key : sanctionsSection.getKeys(false)) {
                 if (slot >= 54) break;
 
-                String playerName = config.getString("sanctions." + key + ".player", "Desconocido");
-                String type = config.getString("sanctions." + key + ".type", "N/A");
-                String reason = config.getString("sanctions." + key + ".reason", "N/A");
-                String duration = config.getString("sanctions." + key + ".duration", "N/A");
-                String date = config.getString("sanctions." + key + ".date", "N/A");
+                // Lee los campos configurados en tu config.yml
+                String name = config.getString("sanctions." + key + ".name", "&cSanción");
+                String materialName = config.getString("sanctions." + key + ".material", "PLAYER_HEAD");
+                String ownerName = config.getString("sanctions." + key + ".owner", "Notch");
+                List<String> rawLore = config.getStringList("sanctions." + key + ".lore");
 
-                ItemStack skull = createPunishmentSkull(playerName, type, reason, duration, date);
-                gui.setItem(slot, skull);
+                ItemStack item = createCustomItem(materialName, ownerName, name, rawLore);
+                gui.setItem(slot, item);
                 slot++;
             }
         }
@@ -55,33 +55,37 @@ public class PunishmentMenu {
         admin.openInventory(gui);
     }
 
-    private ItemStack createPunishmentSkull(String playerName, String type, String reason, String duration, String date) {
-        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) skull.getItemMeta();
-
-        if (meta != null) {
-            try {
-                OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
-                meta.setOwningPlayer(target);
-            } catch (Exception ignored) {
-                // Previene crash si la cabeza no se puede resolver en servidores offline
-            }
-
-            meta.setDisplayName(ChatColor.RED + ChatColor.BOLD.toString() + playerName);
-
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.DARK_GRAY + "------------------------");
-            lore.add(ChatColor.GRAY + "■ Usuario: " + ChatColor.WHITE + playerName);
-            lore.add(ChatColor.GRAY + "■ Tipo: " + ChatColor.YELLOW + type);
-            lore.add(ChatColor.GRAY + "■ Razón: " + ChatColor.RED + reason);
-            lore.add(ChatColor.GRAY + "■ Duración: " + ChatColor.GREEN + duration);
-            lore.add(ChatColor.GRAY + "■ Fecha: " + ChatColor.AQUA + date);
-            lore.add(ChatColor.DARK_GRAY + "------------------------");
-
-            meta.setLore(lore);
-            skull.setItemMeta(meta);
+    private ItemStack createCustomItem(String materialName, String ownerName, String displayName, List<String> rawLore) {
+        Material material = Material.matchMaterial(materialName);
+        if (material == null) {
+            material = Material.PLAYER_HEAD;
         }
 
-        return skull;
+        ItemStack item = new ItemStack(material);
+        
+        // Si es una cabeza de jugador, aplicamos su skin con el owner
+        if (item.getItemMeta() instanceof SkullMeta skullMeta) {
+            try {
+                OfflinePlayer target = Bukkit.getOfflinePlayer(ownerName);
+                skullMeta.setOwningPlayer(target);
+            } catch (Exception ignored) {}
+            item.setItemMeta(skullMeta);
+        }
+
+        if (item.hasItemMeta() || item.getType() == Material.PLAYER_HEAD) {
+            var meta = item.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName));
+
+                List<String> formattedLore = new ArrayList<>();
+                for (String line : rawLore) {
+                    formattedLore.add(ChatColor.translateAlternateColorCodes('&', line));
+                }
+                meta.setLore(formattedLore);
+                item.setItemMeta(meta);
+            }
+        }
+
+        return item;
     }
 }
