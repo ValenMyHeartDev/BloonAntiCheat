@@ -22,7 +22,6 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        // Omitir si está en creativo, espectador, volando legalmente o con bypass
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (player.isFlying() || player.isInsideVehicle() || player.hasPermission("bloon.bypass")) return;
 
@@ -35,15 +34,16 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
-        // Ignorar movimientos hacia abajo o estáticos
         if (deltaY <= 0) return;
-
-        // Ignorar si está cerca de bloques seguros (agua, escaleras, etc.)
         if (isNearSafeBlock(player.getLocation())) return;
 
-        // Si sube a una velocidad imposible para un salto natural (> 0.45 bloques por tick)
+        // Si intenta volar o flotar de forma ilegal
         if (!player.isOnGround() && deltaY > 0.45) {
-            AlertsUtil.sendAlert(player, "Fly / Vertical Speed", "DeltaY: " + String.format("%.2f", deltaY));
+            // 1. ACCIÓN PRINCIPAL: Hace retroceder al jugador a su posición anterior legítima (Anula el cheat)
+            event.setTo(from);
+            
+            // 2. Notificar al staff mediante el sistema de alertas
+            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Movimiento vertical bloqueado (DeltaY: " + String.format("%.2f", deltaY) + ")");
         }
     }
 
