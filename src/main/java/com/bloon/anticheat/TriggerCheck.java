@@ -1,30 +1,35 @@
 package com.bloon.anticheat;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
-    private final HashMap<UUID, List<Long>> attackTimestamps = new HashMap<>();
+    private final HashMap<UUID, Long> lastAttackTime = new HashMap<>();
+    private final HashMap<UUID, Integer> triggerBuffer = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onInteractEntity(PlayerInteractEntityEvent event) {
-        Player player = event.getPlayer();
+    public void onDamage(EntityDamageByEntityEntityEvent event) { // O EntityDamageByEntityEvent según tu imports
+        // Nota: Asegúrate de importar org.bukkit.event.entity.EntityDamageByEntityEvent
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+        Player player = (Player) event.getDamager();
+
         if (player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
@@ -35,32 +40,42 @@ public class TriggerCheck implements Listener {
 
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
+        long last = lastAttackTime.getOrDefault(uuid, 0L);
+        long diff = now - last;
+        lastAttackTime.put(uuid, now);
 
-        List<Long> timestamps = attackTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
-        timestamps.add(now);
+        int buffer = triggerBuffer.getOrDefault(uuid, 0);
 
-        // Limpiamos los ataques de hace más de 1 segundo
-        timestamps.removeIf(time -> now - time > 1000);
+        // Si el intervalo entre golpes es inferior a 130ms de forma constante (velocidad robótica/macro)
+        if (diff < 130 && diff > 0) {
+            buffer += 2;
+        } else if (diff >= 130 && diff < 250) {
+            buffer += 1; // Ritmo muy rápido sospechoso
+        } else {
+            // Si el jugador golpea a ritmo normal humano, reducimos el búfer
+            buffer = Math.max(0, buffer - 2);
+        }
 
-        int attacksInOneSecond = timestamps.size();
-        
-        // Un TriggerBot o AutoClicker suele superar los 15-18 ataques por segundo de forma sostenida
-        int maxAllowed = config.getInt("checks.autoclicker.max-cps", 18);
+        triggerBuffer.put(uuid, buffer);
 
-        if (attacksInOneSecond > maxAllowed) {
+        // Umbral de activación bajo para que salte rápido (puedes ajustarlo si deseas)
+        int threshold = 5;
+
+        if (buffer >= threshold) {
             event.setCancelled(true);
 
-            // Asignamos el nivel V (Confirmado) si es exagerado, o P (Posiblemente)
-            AlertsUtil.AlertType alertType = (attacksInOneSecond >= 24) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            // Asignamos nivel V si el intervalo es inferior a 70ms (extremadamente inhumano), sino P
+            AlertsUtil.AlertType alertType = (diff < 70) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
             AlertsUtil.sendAlert(
                 player, 
-                "TriggerBot / AutoClicker", 
-                "Ataques muy rápidos (" + attacksInOneSecond + " CPS)", 
+                "TriggerBot", 
+                "Ataque automatizado (Intervalo: " + diff + "ms | Buffer: " + buffer + ")", 
                 alertType
             );
 
-            timestamps.clear();
+            // Reseteamos parcialmente el búfer
+            triggerBuffer.put(uuid, 2);
         }
     }
 }
