@@ -22,7 +22,7 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        // Si está en creativo o espectador, o tiene permisos de bypass, se ignora
+        // Si está en creativo, espectador o tiene permiso de bypass, se ignora
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (player.isFlying() || player.isInsideVehicle() || player.hasPermission("bloon.bypass")) return;
 
@@ -35,19 +35,19 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
-        // Ignoramos si está cayendo o quieto
+        // Ignoramos si el jugador está cayendo o quieto en el mismo nivel
         if (deltaY <= 0) return;
 
-        // Si está cerca de bloques seguros (agua, escaleras, andamios, telarañas, etc.)
+        // Si está cerca de bloques seguros (agua, escaleras, losas, andamios, etc.)
         if (isNearSafeBlock(player.getLocation())) return;
 
         // Detección estricta: si no está en el suelo y sube más de lo que permite un salto normal en supervivencia (> 0.42)
-        if (!player.isOnGround() && deltaY > 0.419999999999998 && !player.getLocation().getBlock().getType().name().contains("STEP")) {
+        if (!player.isOnGround() && deltaY > 0.419999999999998) {
             
-            // 1. ROLLBACK: Devuelve al jugador a la ubicación anterior legítima
+            // 1. ROLLBACK: Devuelve al jugador a la ubicación anterior legítima de forma instantánea
             event.setTo(from);
 
-            // 2. Alerta al staff y a la consola del hosting
+            // 2. Envía la alerta al staff en el juego y a la consola del hosting
             AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Vuelo bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
         }
     }
