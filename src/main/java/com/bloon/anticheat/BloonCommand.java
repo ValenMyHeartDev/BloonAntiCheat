@@ -34,8 +34,9 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/bloon reload §7- Recarga la configuración.");
             sender.sendMessage("§e/bloon menu §7- Panel general del anticheat.");
             sender.sendMessage("§e/bloon sanciones §7- Panel de baneados y muteados.");
+            sender.sendMessage("§e/bloon globals §7- Historial global de sanciones.");
             sender.sendMessage("§e/bloon banear §7- Abre el menú para sancionar jugadores.");
-            sender.sendMessage("§e/bloon ignore <jugador> §7- Ignora o audita a un jugador para pruebas.");
+            sender.sendMessage("§e/bloon ignore <jugador> §7- Ignora o audita a un jugador.");
             return true;
         }
 
@@ -46,10 +47,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args[0].equalsIgnoreCase("menu")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cEste comando solo puede ser usado por un jugador.");
-                return true;
-            }
+            if (!(sender instanceof Player)) return true;
             openGeneralMenu((Player) sender);
             return true;
         }
@@ -57,6 +55,12 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
         if (args[0].equalsIgnoreCase("sanciones")) {
             if (!(sender instanceof Player)) return true;
             BloonGUIListener.openMainSanctionsMenu((Player) sender);
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("globals")) {
+            if (!(sender instanceof Player)) return true;
+            BloonGUIListener.openGlobalSanctionsMenu((Player) sender);
             return true;
         }
 
@@ -74,17 +78,15 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
             Player target = Bukkit.getPlayer(args[1]);
             if (target == null) {
-                sender.sendMessage("§c[BloonAC] El jugador no está conectado o no existe.");
+                sender.sendMessage("§c[BloonAC] El jugador no está conectado.");
                 return true;
             }
 
             boolean isIgnored = CheckManager.toggleIgnore(target.getUniqueId());
             if (isIgnored) {
-                sender.sendMessage("§a[BloonAC] Ahora el anticheat IGNORA por completo a §e" + target.getName() + " §a(puede probar hacks sin logs).");
-                target.sendMessage("§e[BloonAC] El staff te ha puesto en modo de prueba (Ignorado por el Anticheat).");
+                sender.sendMessage("§a[BloonAC] Ahora el anticheat IGNORA a §e" + target.getName() + "§a.");
             } else {
-                sender.sendMessage("§c[BloonAC] El anticheat vuelve a DETECTAR a §e" + target.getName() + ".");
-                target.sendMessage("§c[BloonAC] Ya no estás ignorado por el Anticheat.");
+                sender.sendMessage("§c[BloonAC] El anticheat vuelve a DETECTAR a §e" + target.getName() + "§c.");
             }
             return true;
         }
@@ -95,23 +97,15 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
     private void openGeneralMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "§8[§cBloonAC§8] Panel General");
-
         ItemStack info = new ItemStack(Material.BOOK);
         ItemMeta meta = info.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("§bEstado del Anticheat");
-            List<String> lore = new ArrayList<>();
-            lore.add("§7Módulo Fly: §aActivo");
-            lore.add("§7Módulo ClickTP: §aActivo");
-            lore.add("§7Módulo Criticals: §aActivo");
-            
-            meta.setLore(lore);
+            meta.setLore(List.of("§7Módulos Activos y Operativos."));
             info.setItemMeta(meta);
         }
         inv.setItem(13, info);
-
         player.openInventory(inv);
-        player.sendMessage("§a[BloonAC] Abriendo panel general...");
     }
 
     @Override
@@ -122,6 +116,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             completions.add("reload");
             completions.add("menu");
             completions.add("sanciones");
+            completions.add("globals");
             completions.add("banear");
             completions.add("ignore");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("ignore")) {
