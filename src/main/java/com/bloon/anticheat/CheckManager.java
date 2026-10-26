@@ -14,13 +14,13 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // Registro de Listeners existentes
+        // Registro de módulos básicos y esenciales
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
         pm.registerEvents(new FlyCheck(plugin), plugin);
         pm.registerEvents(new ExploitCheck(plugin), plugin);
 
-        plugin.getLogger().info("[BloonAC] ¡Todos los módulos se cargaron correctamente!");
+        plugin.getLogger().info("[BloonAC] ¡Módulos registrados correctamente!");
     }
 }
