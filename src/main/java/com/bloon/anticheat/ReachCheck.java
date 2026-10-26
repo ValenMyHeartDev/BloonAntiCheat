@@ -7,7 +7,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.util.Vector;
 
 public class ReachCheck implements Listener {
 
@@ -17,7 +16,7 @@ public class ReachCheck implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
         Player player = (Player) event.getDamager();
@@ -29,22 +28,19 @@ public class ReachCheck implements Listener {
 
         Entity target = event.getEntity();
         
-        // Cálculo de distancia exacta (incluyendo diferencias de altura y hitboxes)
-        double distance = player.getLocation().distance(target.getLocation());
-        
-        // Distancia máxima permitida por config (por defecto 4.2 bloques para compensar latencia/ping)
-        double maxDistance = config.getDouble("checks.reach.max-distance", 4.2);
+        // Distancia 3D entre los ojos del jugador y la entidad objetivo
+        double distance = player.getEyeLocation().distance(target.getLocation());
+        double maxDistance = config.getDouble("checks.reach.max-distance", 3.8); // Ajuste más estricto
 
         if (distance > maxDistance) {
             event.setCancelled(true);
 
-            // Si la distancia es ridículamente alta (> 5.5), es un KillAura/Reach evidente -> Nivel V
-            AlertsUtil.AlertType alertType = (distance > 5.5) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            AlertsUtil.AlertType alertType = (distance > 4.5) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
             AlertsUtil.sendAlert(
                 player, 
                 "Reach / KillAura", 
-                "Distancia: " + String.format("%.2f", distance) + " bloques (Máx: " + maxDistance + ")", 
+                "Alcance ilegal (Distancia: " + String.format("%.2f", distance) + "m | Máx: " + maxDistance + "m)", 
                 alertType
             );
         }
