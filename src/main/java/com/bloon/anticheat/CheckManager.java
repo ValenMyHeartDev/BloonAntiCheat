@@ -14,18 +14,11 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // Módulos de Combate
+        // Registrar solo los checks que existen en el paquete
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
-        pm.registerEvents(new AutoClickerCheck(plugin), plugin);
-
-        // Módulos de Movimiento
         pm.registerEvents(new FlyCheck(plugin), plugin);
-        pm.registerEvents(new MovementAndExploitCheck(plugin), plugin);
-
-        // Interacción y Seguridad
-        pm.registerEvents(new PlayerAndInteractionCheck(plugin), plugin);
         pm.registerEvents(new ExploitCheck(plugin), plugin);
 
         plugin.getLogger().info("[BloonAC] ¡Todos los módulos han sido cargados exitosamente!");
