@@ -8,12 +8,12 @@ settings:
 punishments:
   triggerbot:
     enabled: true
-    buffer-threshold: 10
+    buffer-threshold: 6.0
     command: "kick %player% TriggerBot detectado"
 
 checks:
   TriggerBot:
-    enabled: false
+    enabled: true
     buffer-decay-per-second: 0.25
   autoclicker:
     enabled: true
