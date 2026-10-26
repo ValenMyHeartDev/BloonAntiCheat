@@ -16,13 +16,16 @@ public class Main extends JavaPlugin {
             getCommand("bloon").setTabCompleter(bloonCmd);
         }
 
-        // 3. Inicializar y registrar todos los checks de eventos mediante CheckManager
+        // 3. Inicializar y registrar todos los checks mediante CheckManager
         new CheckManager(this).registerAllChecks();
 
-        // 4. Registrar los eventos del menú GUI de sanciones y baneos
+        // 4. Registrar los eventos de los Menús GUI (Sanciones/Baneos/Mutes)
         getServer().getPluginManager().registerEvents(new BloonGUIListener(this), this);
 
-        getLogger().info("[BloonAC] Plugin activado e inicializado correctamente con sistema de sanciones.");
+        // 5. Registrar el Listener para el control de chat de jugadores muteados
+        getServer().getPluginManager().registerEvents(new ChatListener(), this);
+
+        getLogger().info("[BloonAC] Plugin activado correctamente con módulo de baneos por IP y mutes.");
     }
 
     @Override
