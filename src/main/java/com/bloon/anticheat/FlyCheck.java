@@ -1,5 +1,6 @@
 package com.bloon.anticheat;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -31,14 +32,14 @@ public class FlyCheck implements Listener {
         if (deltaY > 0.42 && !player.isOnGround() && player.getFallDistance() == 0) {
             event.setCancelled(true);
 
-            AlertsUtil.AlertType alertType = (deltaY > 1.2) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            String message = "[BloonAC] " + player.getName() + " falló Fly (DeltaY: " + String.format("%.2f", deltaY) + ")";
+            Bukkit.getLogger().info(message);
 
-            AlertsUtil.sendAlert(
-                player,
-                "Fly",
-                "Elevacion ilegal (DeltaY: " + String.format("%.2f", deltaY) + ")",
-                alertType
-            );
+            for (Player staff : Bukkit.getOnlinePlayers()) {
+                if (staff.hasPermission("bloon.alerts")) {
+                    staff.sendMessage("§c" + message);
+                }
+            }
         }
     }
 }
