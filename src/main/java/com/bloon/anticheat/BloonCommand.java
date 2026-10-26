@@ -1,20 +1,13 @@
 package com.bloon.anticheat;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class BloonCommand implements CommandExecutor, TabCompleter {
 
@@ -35,8 +28,8 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§8[§bBloonAC§8] §7Comandos disponibles:");
             sender.sendMessage("§e/bloon reload §7- Recarga la configuración.");
             sender.sendMessage("§e/bloon menu §7- Panel general del anticheat.");
-            sender.sendMessage("§e/bloon sanciones §7- Lista interactiva de jugadores baneados.");
-            sender.sendMessage("§e/bloon banear §7- Abre el menú para banear/mutear usuarios.");
+            sender.sendMessage("§e/bloon sanciones §7- Panel interactivo de baneados y muteados.");
+            sender.sendMessage("§e/bloon banear §7- Abre el menú para sancionar jugadores.");
             return true;
         }
 
@@ -48,7 +41,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
         if (args[0].equalsIgnoreCase("sanciones")) {
             if (!(sender instanceof Player)) return true;
-            openBannedPlayersMenu((Player) sender);
+            BloonGUIListener.openMainSanctionsMenu((Player) sender);
             return true;
         }
 
@@ -60,28 +53,6 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage("§cComando desconocido. Usa §e/bloon help§c.");
         return true;
-    }
-
-    private void openBannedPlayersMenu(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 36, "§8[§cBloonAC§8] Sanciones Activas");
-        Map<UUID, SanctionsManager.SanctionData> bans = SanctionsManager.getBannedPlayers();
-
-        for (SanctionsManager.SanctionData data : bans.values()) {
-            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-            ItemMeta meta = skull.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§c" + data.getPlayerName());
-                List<String> lore = new ArrayList<>();
-                lore.add("§7Baneado T: §e" + data.getDuration());
-                lore.add("§7Razón: §f" + data.getReason());
-                meta.setLore(lore);
-                skull.setItemMeta(meta);
-            }
-            inv.addItem(skull);
-        }
-
-        player.openInventory(inv);
-        player.sendMessage("§a[BloonAC] Abriendo lista de jugadores sancionados...");
     }
 
     @Override
