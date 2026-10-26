@@ -28,7 +28,6 @@ public class FlyCheck implements Listener {
 
         double deltaY = event.getTo().getY() - event.getFrom().getY();
 
-        // Elevación no permitida
         if (deltaY > 0.42 && !player.isOnGround() && player.getFallDistance() == 0) {
             event.setCancelled(true);
 
