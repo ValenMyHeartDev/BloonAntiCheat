@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.potion.PotionEffectType;
 
 public class FlyCheck implements Listener {
 
@@ -31,7 +32,7 @@ public class FlyCheck implements Listener {
 
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
 
-        // Guardar la posición segura cuando está firmemente en el suelo
+        // Guardar la posición segura cuando está en el suelo
         if (player.isOnGround()) {
             data.setLastSafeLocation(player.getLocation());
             return;
@@ -43,28 +44,30 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
-        // Ignorar caídas o movimientos hacia abajo
+        // Si cae o se mantiene en el mismo nivel vertical, permitimos el movimiento horizontal libre al frente
         if (deltaY <= 0) return;
         if (isNearSafeBlock(player.getLocation())) return;
 
-        // El salto normal de Minecraft en bloque plano tiene un deltaY inicial de ~0.42. 
-        // Subimos el umbral a 0.435 y validamos que no tenga efectos de salto (Jump Boost), 
-        // permitiendo saltar con total normalidad pero atrapando el vuelo/flotación sostenida.
-        double maxJumpHeight = 0.435;
-        if (player.hasPotionEffect(org.bukkit.potion.PotionEffectType.JUMP_BOOST)) {
-            maxJumpHeight = 0.75; // Margen si tiene poción de salto
-        }
+        // Margen de altura para saltos normales o con efecto de salto (Jump Boost)
+        double maxJumpHeight = 0.42;
+        try {
+            if (player.hasPotionEffect(PotionEffectType.JUMP)) {
+                maxJumpHeight = 0.8;
+            }
+        } catch (Exception ignored) {}
 
+        // Detección estricta de vuelo/flotación vertical en el aire
         if (!player.isOnGround() && deltaY > maxJumpHeight) {
             event.setCancelled(true);
 
+            // Rollback a la última posición segura registrada en tierra
             if (data.getLastSafeLocation() != null) {
                 player.teleport(data.getLastSafeLocation());
             } else {
                 player.teleport(from);
             }
 
-            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Movimiento bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
+            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Vuelo bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
         }
     }
 
