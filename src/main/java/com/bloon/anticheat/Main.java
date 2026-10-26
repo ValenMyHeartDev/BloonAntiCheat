@@ -6,17 +6,17 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Guardar config por defecto
+        // 1. Guardar la configuración por defecto (config.yml)
         saveDefaultConfig();
 
-        // Registrar comando /bloon
+        // 2. Registrar el comando /bloon y su ejecutor/tab completer
         if (getCommand("bloon") != null) {
             BloonCommand bloonCmd = new BloonCommand(this);
             getCommand("bloon").setExecutor(bloonCmd);
             getCommand("bloon").setTabCompleter(bloonCmd);
         }
 
-        // Cargar todos los módulos mediante CheckManager
+        // 3. Inicializar y registrar todos los checks de eventos mediante CheckManager
         new CheckManager(this).registerAllChecks();
 
         getLogger().info("[BloonAC] Plugin activado e inicializado correctamente.");
@@ -24,6 +24,6 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getLogger().info("[BloonAC] Plugin desactivado.");
+        getLogger().info("[BloonAC] Plugin desactivado correctamente.");
     }
 }
