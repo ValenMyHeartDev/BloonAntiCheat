@@ -44,7 +44,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
         if (args[0].equalsIgnoreCase("menu")) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage("§cEste comando solo puede ser ejecutado por un jugador dentro del servidor.");
+                sender.sendMessage("§cEste comando solo puede ser ejecutado por un jugador.");
                 return true;
             }
 
@@ -58,7 +58,6 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
     }
 
     private void openSanctionsMenu(Player player) {
-        // Crear un inventario GUI de 27 espacios (3 filas) para el panel de sanciones
         Inventory menu = Bukkit.createInventory(null, 27, "§8[§cBloonAC§8] Panel de Sanciones");
 
         // Ítem 1: Estado General
@@ -69,12 +68,14 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             List<String> lore = new ArrayList<>();
             lore.add("§7Protección contra Fly: " + (plugin.getConfig().getBoolean("checks.movement.fly.enabled", true) ? "§aActivo" : "§cInactivo"));
             lore.add("§7Protección contra ClickTP: " + (plugin.getConfig().getBoolean("checks.movement.clicktp.enabled", true) ? "§aActivo" : "§cInactivo"));
-            lore.setLore(lore);
+            
+            // Corrección limpia compatible con todas las versiones de Bukkit
+            infoMeta.setLore(lore);
             info.setItemMeta(infoMeta);
         }
         menu.setItem(4, info);
 
-        // Ítem 2: Acción rápida de Banear último tramposo o alertas
+        // Ítem 2: Alertas de Staff
         ItemStack alertToggle = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta alertMeta = alertToggle.getItemMeta();
         if (alertMeta != null) {
@@ -96,7 +97,6 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
         }
         menu.setItem(15, reloadItem);
 
-        // Abrir el inventario al jugador
         player.openInventory(menu);
         player.sendMessage("§a[BloonAC] Abriendo el panel de control y sanciones...");
     }
