@@ -6,16 +6,16 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class SanctionsManager {
 
     private static final Map<UUID, SanctionData> bannedPlayers = new HashMap<>();
-    private static final Map<String, SanctionData> bannedIPs = new HashMap<>(); // Registro de IPs baneadas
+    private static final Map<String, SanctionData> bannedIPs = new HashMap<>();
     private static final Map<UUID, SanctionData> mutedPlayers = new HashMap<>();
+    
+    // Historial global acumulativo por cada UUID de jugador
+    private static final Map<UUID, List<SanctionRecord>> playerHistory = new HashMap<>();
 
     public static class SanctionData {
         private final UUID uuid;
@@ -39,14 +39,30 @@ public class SanctionsManager {
         public String getIp() { return ip; }
     }
 
+    public static class SanctionRecord {
+        private final String type; // "BAN" o "MUTE"
+        private final String reason;
+        private final String duration;
+        private final long timestamp;
+
+        public SanctionRecord(String type, String reason, String duration) {
+            this.type = type;
+            this.reason = reason;
+            this.duration = duration;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public String getType() { return type; }
+        public String getReason() { return reason; }
+        public String getDuration() { return duration; }
+    }
+
     public static void banPlayer(UUID uuid, String name, String reason, String durationStr) {
         Date expiration = parseDuration(durationStr);
         String kickReason = "§cHas sido BANEADO por IP del servidor.\n§7Razón: §e" + reason + "\n§7Duración: §c" + durationStr;
 
-        // 1. Baneo por nombre
         Bukkit.getBanList(BanList.Type.NAME).addBan(name, reason, expiration, "BloonAC");
 
-        // 2. Obtener IP y banearla si está conectado
         String ipAddressStr = null;
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
         if (offlinePlayer.isOnline() && offlinePlayer.getPlayer() != null) {
@@ -64,15 +80,32 @@ public class SanctionsManager {
         if (ipAddressStr != null && !ipAddressStr.isEmpty()) {
             bannedIPs.put(ipAddressStr, data);
         }
+
+        addRecord(uuid, "BAN", reason, durationStr);
     }
 
     public static void mutePlayer(UUID uuid, String name, String reason, String durationStr) {
-        mutedPlayers.put(uuid, new SanctionData(uuid, name, reason, durationStr, null));
+        SanctionData data = new SanctionData(uuid, name, reason, durationStr, null);
+        mutedPlayers.put(uuid, data);
         
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
         if (offlinePlayer.isOnline() && offlinePlayer.getPlayer() != null) {
             offlinePlayer.getPlayer().sendMessage("§c[BloonAC] Has sido SILENCIADO.\n§7Razón: §e" + reason + "\n§7Duración: §c" + durationStr);
         }
+
+        addRecord(uuid, "MUTE", reason, durationStr);
+    }
+
+    private static void addRecord(UUID uuid, String type, String reason, String duration) {
+        playerHistory.computeIfAbsent(uuid, k -> new ArrayList<>()).add(new SanctionRecord(type, reason, duration));
+    }
+
+    public static List<SanctionRecord> getHistory(UUID uuid) {
+        return playerHistory.getOrDefault(uuid, new ArrayList<>());
+    }
+
+    public static Set<UUID> getAllSanctionedPlayers() {
+        return playerHistory.keySet();
     }
 
     public static void unbanPlayer(UUID uuid) {
@@ -104,23 +137,14 @@ public class SanctionsManager {
         return mutedPlayers.containsKey(uuid);
     }
 
-    public static Map<UUID, SanctionData> getBannedPlayers() {
-        return bannedPlayers;
-    }
-
-    public static Map<String, SanctionData> getBannedIPs() {
-        return bannedIPs;
-    }
-
-    public static Map<UUID, SanctionData> getMutedPlayers() {
-        return mutedPlayers;
-    }
+    public static Map<UUID, SanctionData> getBannedPlayers() { return bannedPlayers; }
+    public static Map<String, SanctionData> getBannedIPs() { return bannedIPs; }
+    public static Map<UUID, SanctionData> getMutedPlayers() { return mutedPlayers; }
 
     private static Date parseDuration(String durationStr) {
         if (durationStr == null || durationStr.contains("Permanente")) {
             return null;
         }
-
         long millisToAdd = 0;
         try {
             String numberOnly = durationStr.replaceAll("[^0-9]", "");
@@ -133,7 +157,6 @@ public class SanctionsManager {
                 }
             }
         } catch (Exception ignored) {}
-
         if (millisToAdd == 0) return null;
         return new Date(System.currentTimeMillis() + millisToAdd);
     }
