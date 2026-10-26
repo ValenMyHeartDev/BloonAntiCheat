@@ -22,6 +22,7 @@ public class AlertsUtil {
         }
     }
 
+    // Método principal con 4 parámetros (incluye el nivel de alerta)
     public static void sendAlert(Player player, String checkName, String details, AlertType type) {
         String message = ChatColor.translateAlternateColorCodes('&', 
             "&8[&cBloonAC&8] " + type.getPrefix() + " &f" + player.getName() + " &7falló &c" + checkName + " &7(" + details + ")"
@@ -36,5 +37,10 @@ public class AlertsUtil {
                 staff.sendMessage(message);
             }
         }
+    }
+
+    // SOBRECARGA: Método con 3 parámetros para evitar errores en clases que no especifican el tipo
+    public static void sendAlert(Player player, String checkName, String details) {
+        sendAlert(player, checkName, details, AlertType.P);
     }
 }
