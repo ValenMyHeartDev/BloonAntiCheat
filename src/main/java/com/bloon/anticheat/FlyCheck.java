@@ -32,7 +32,7 @@ public class FlyCheck implements Listener {
 
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
 
-        // Guardar la posición segura cuando está en el suelo
+        // Guardar la posición segura cuando está firmemente en el suelo
         if (player.isOnGround()) {
             data.setLastSafeLocation(player.getLocation());
             return;
@@ -44,11 +44,8 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
-        // Si cae o se mantiene en el mismo nivel vertical, permitimos el movimiento horizontal libre al frente
-        if (deltaY <= 0) return;
         if (isNearSafeBlock(player.getLocation())) return;
 
-        // Margen de altura para saltos normales o con efecto de salto (Jump Boost)
         double maxJumpHeight = 0.42;
         try {
             if (player.hasPotionEffect(PotionEffectType.JUMP)) {
@@ -56,18 +53,22 @@ public class FlyCheck implements Listener {
             }
         } catch (Exception ignored) {}
 
-        // Detección estricta de vuelo/flotación vertical en el aire
-        if (!player.isOnGround() && deltaY > maxJumpHeight) {
+        // Detección: Si está en el aire, no está tocando suelo y sube más de un salto,
+        // o si se mantiene flotando en el aire sin caer de forma natural.
+        boolean isFloatingOrFlying = (!player.isOnGround() && deltaY > maxJumpHeight) || 
+                                     (!player.isOnGround() && deltaY >= 0 && from.getY() == to.getY());
+
+        // Si se detecta vuelo o flotación, cancelamos y devolvemos al jugador a tierra firme
+        if (isFloatingOrFlying) {
             event.setCancelled(true);
 
-            // Rollback a la última posición segura registrada en tierra
             if (data.getLastSafeLocation() != null) {
                 player.teleport(data.getLastSafeLocation());
             } else {
                 player.teleport(from);
             }
 
-            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Vuelo bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
+            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Movimiento horizontal y vertical bloqueado");
         }
     }
 
