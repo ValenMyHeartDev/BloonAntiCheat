@@ -42,30 +42,35 @@ public class TriggerCheck implements Listener {
 
         double currentBuffer = data.getTriggerBuffer();
 
-        // 1. Si pasó más de 1 segundo sin atacar, se limpia el búfer acumulado
-        if (diff > 1000) {
-            currentBuffer = 0.0;
+        // Si pasa más de 800ms sin atacar, limpiamos parte del búfer acumulado
+        if (diff > 800) {
+            currentBuffer = Math.max(0.0, currentBuffer - 2.0);
         }
 
-        // 2. Sumamos búfer si la frecuencia entre golpes es sospechosamente alta (< 140 ms)
-        if (diff < 140) {
+        // Detección escalonada más estricta para tramposos
+        if (diff < 70) {
+            // Velocidad inhumana (Macros / TriggerBot / AutoClicker rápido): sube muy rápido
+            currentBuffer += 2.5;
+        } else if (diff < 120) {
+            // Ritmo sospechosamente rápido constante
             currentBuffer += 1.5;
         } else {
-            currentBuffer += 0.5;
+            // Clics normales / PvP legal: reducimos el búfer para proteger los hits limpios
+            currentBuffer = Math.max(0.0, currentBuffer - 0.5);
         }
 
         data.setTriggerBuffer(currentBuffer);
 
-        double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 6.0);
+        // Umbral optimizado a 4.5 para que salte con rapidez ante trampas
+        double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 4.5);
 
-        // 3. Si se supera el límite, bloqueamos el ataque
         if (currentBuffer >= threshold) {
             event.setCancelled(true);
 
-            AlertsUtil.sendAlert(player, "TriggerBot", "Ataque sospechoso bloqueado (Buffer: " + String.format("%.1f", currentBuffer) + ")");
+            AlertsUtil.sendAlert(player, "TriggerBot", "Ataque no legítimo bloqueado (Buffer: " + String.format("%.1f", currentBuffer) + ")");
 
-            // Reseteamos el búfer tras aplicar el bloqueo
-            data.setTriggerBuffer(0.0);
+            // Reseteamos parcialmente el búfer para seguir frenando si continúan
+            data.setTriggerBuffer(1.0);
         }
     }
 }
