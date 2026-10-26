@@ -19,7 +19,10 @@ public class Main extends JavaPlugin {
         // 3. Inicializar y registrar todos los checks de eventos mediante CheckManager
         new CheckManager(this).registerAllChecks();
 
-        getLogger().info("[BloonAC] Plugin activado e inicializado correctamente.");
+        // 4. Registrar los eventos del menú GUI de sanciones y baneos
+        getServer().getPluginManager().registerEvents(new BloonGUIListener(this), this);
+
+        getLogger().info("[BloonAC] Plugin activado e inicializado correctamente con sistema de sanciones.");
     }
 
     @Override
