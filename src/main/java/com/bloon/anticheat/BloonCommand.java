@@ -29,7 +29,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Menú de ayuda predeterminado (/bloon help o /bloon)
+        // Menú de ayuda con la leyenda de los niveles de alerta (F, P, V)
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&8&m-----------------------------------"));
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&lBloon AntiCheat V1 &7- Ayuda & Niveles"));
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&8&m-----------------------------------"));
