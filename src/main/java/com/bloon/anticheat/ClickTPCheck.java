@@ -21,7 +21,12 @@ public class ClickTPCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("bloon.bypass") || player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming() || player.isRiptiding()) {
+        // Omitir solo si el administrador ejecutó /bloon ignore <jugador>
+        if (CheckManager.isIgnored(player)) {
+            return;
+        }
+
+        if (player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming() || player.isRiptiding()) {
             return;
         }
 
