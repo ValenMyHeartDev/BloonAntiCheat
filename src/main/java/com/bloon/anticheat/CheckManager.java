@@ -16,13 +16,13 @@ public class CheckManager {
 
         // Módulos de Movimiento y Exploits
         pm.registerEvents(new FlyCheck(plugin), plugin);
-        pm.registerEvents(new ClickTPCheck(plugin), plugin); // <--- NUEVO MÓDULO CLICKTP
+        pm.registerEvents(new ClickTPCheck(plugin), plugin);
 
         // Módulos de Combate
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
 
-        plugin.getLogger().info("[BloonAC] ¡Módulos de ClickTP y movimiento registrados correctamente!");
+        plugin.getLogger().info("[BloonAC] ¡Módulos registrados correctamente!");
     }
 }
