@@ -38,19 +38,17 @@ public class TriggerCheck implements Listener {
         long diff = now - last;
         lastAttackTime.put(uuid, now);
 
-        // Umbral de alta sensibilidad: Cualquier golpe con un intervalo menor a 220ms será interceptado de inmediato
-        // (Un humano jugando limpio rara vez baja de 250-300ms constantes en cada golpe de forma perfecta)
-        if (diff > 0 && diff < 220) {
+        // Umbral ultrasensible: Cancelación inmediata ante cualquier intervalo inferior a 230ms
+        if (diff > 0 && diff < 230) {
             event.setCancelled(true);
 
-            // Clasificación automática de nivel según la velocidad inhumana
-            AlertsUtil.AlertType alertType = (diff < 100) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            // Si el golpe ocurre en menos de 80ms es un TriggerBot/Macro descarado -> [V]
+            AlertsUtil.AlertType alertType = (diff < 80) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
-            // Envía la alerta obligatoria a consola y staff con los niveles F/P/V configurados
             AlertsUtil.sendAlert(
                 player, 
                 "TriggerBot", 
-                "Ataque automatizado bloqueado (Intervalo: " + diff + "ms)", 
+                "Ataque robótico bloqueado (Intervalo: " + diff + "ms)", 
                 alertType
             );
         }
