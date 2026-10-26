@@ -14,16 +14,17 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // Módulos de Combate y Críticos
+        // 1. Registro seguro de Movimiento (FlyCheck optimizado)
+        pm.registerEvents(new FlyCheck(plugin), plugin);
+
+        // 2. Registro seguro de Combate básico
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
-        pm.registerEvents(new CriticalsCheck(plugin), plugin); // <--- NUEVO
 
-        // Módulos de Movimiento y Exploits
-        pm.registerEvents(new FlyCheck(plugin), plugin);
-        pm.registerEvents(new ExploitCheck(plugin), plugin);
+        // Si ya creaste CriticalsCheck.java, descomenta la siguiente línea:
+        // pm.registerEvents(new CriticalsCheck(plugin), plugin);
 
-        plugin.getLogger().info("[BloonAC] ¡Todos los módulos de combate y movimiento se cargaron correctamente!");
+        plugin.getLogger().info("[BloonAC] ¡Módulos de seguridad cargados exitosamente!");
     }
 }
