@@ -1,12 +1,12 @@
 package com.bloon.anticheat;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -16,50 +16,47 @@ import java.util.List;
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
-    private final HashMap<UUID, List<Long>> clickTimestamps = new HashMap<>();
+    private final HashMap<UUID, List<Long>> attackTimestamps = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
-            return;
-        }
-
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
         if (player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
-        
-        boolean autoClickerEnabled = config.getBoolean("checks.autoclicker.enabled", true);
         boolean triggerBotEnabled = config.getBoolean("checks.TriggerBot.enabled", true) || 
                                     config.getBoolean("punishments.triggerbot.enabled", true);
 
-        if (!autoClickerEnabled && !triggerBotEnabled) return;
+        if (!triggerBotEnabled) return;
 
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
 
-        List<Long> timestamps = clickTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
+        List<Long> timestamps = attackTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
         timestamps.add(now);
 
+        // Limpiamos los ataques de hace más de 1 segundo
         timestamps.removeIf(time -> now - time > 1000);
 
-        int currentCPS = timestamps.size();
-        int maxAllowedCPS = config.getInt("checks.autoclicker.max-cps", 18);
+        int attacksInOneSecond = timestamps.size();
+        
+        // Un TriggerBot o AutoClicker suele superar los 15-18 ataques por segundo de forma sostenida
+        int maxAllowed = config.getInt("checks.autoclicker.max-cps", 18);
 
-        if (currentCPS > maxAllowedCPS) {
+        if (attacksInOneSecond > maxAllowed) {
             event.setCancelled(true);
 
-            // Si supera por mucho el límite (>= 25 CPS) se marca como V (Cheat Confirmado), sino P (Posiblemente)
-            AlertsUtil.AlertType alertType = (currentCPS >= 25) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            // Asignamos el nivel V (Confirmado) si es exagerado, o P (Posiblemente)
+            AlertsUtil.AlertType alertType = (attacksInOneSecond >= 24) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
             AlertsUtil.sendAlert(
                 player, 
-                "AutoClicker / TriggerBot", 
-                "CPS: " + currentCPS + " / " + maxAllowedCPS + " máx", 
+                "TriggerBot / AutoClicker", 
+                "Ataques muy rápidos (" + attacksInOneSecond + " CPS)", 
                 alertType
             );
 
