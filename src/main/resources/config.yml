@@ -4,53 +4,50 @@
 
 settings:
   prefix: "&8[&cBloonAC&8]"
+  debug-mode: false
 
-# Configuración global de castigos y sanciones automáticas
+# Configuración global de castigos y umbrales de advertencia
 punishments:
   triggerbot:
     enabled: true
-    buffer-threshold: 3.0
-    command: "kick %player% TriggerBot detectado"
-  autoclicker:
+    action: "kick %player% &c[BloonAC] Uso de TriggerBot detectado"
+  killaura:
     enabled: true
-    command: "kick %player% AutoClicker detectado"
+    action: "kick %player% &c[BloonAC] Uso de KillAura / Reach detectado"
   fly:
     enabled: true
-    command: "kick %player% Fly/Vuelo ilegal detectado"
+    action: "kick %player% &c[BloonAC] Vuelo ilegal detectado"
 
-# Módulos de Verificación y Hacks Soportados
+# ---------------------------------------------------
+# MÓDULOS DE VERIFICACIÓN Y HACKS
+# ---------------------------------------------------
 checks:
-  # -------------------------------------------------
-  # 1. COMBAT CHECKS (Hacks de Combate y PvP Moderno)
-  # -------------------------------------------------
+  # 1. Combate y PvP Moderno
   combat:
     killaura: true
     aimassist: true
     autoclicker:
       enabled: true
-      max-cps: 18
+      max-cps: 16
     reach:
       enabled: true
-      max-distance: 4.2
+      max-distance: 3.8
     velocity: true
     antiknockback: true
     criticals: true
-    TriggerBot:
-      enabled: true
-      buffer-decay-per-second: 0.25
+    triggerbot: true
     crystalaura: true
-    anchoraura: true      # Detección de Respawn Anchors automáticos
-    bedaura: true         # Detección de Camas explosivas automáticas
-    shieldbreak: true     # Detección de ruptura de escudo instantánea
+    anchoraura: true
+    bedaura: true
+    shieldbreak: true
     autototem: true
     autoarmor: true
 
-  # -------------------------------------------------
-  # 2. MOVEMENT CHECKS (Hacks de Movimiento y Física)
-  # -------------------------------------------------
+  # 2. Movimiento y Física (Fly, Speed, Scaffold, etc.)
   movement:
     fly:
       enabled: true
+      strict-mode: true
     speed: true
     timer: true
     nofall: true
@@ -63,9 +60,7 @@ checks:
     blink: true
     packetfly: true
 
-  # -------------------------------------------------
-  # 3. PLAYER CHECKS (Interacciones del Jugador)
-  # -------------------------------------------------
+  # 3. Interacciones y Jugador
   player:
     fastplace: true
     fastbreak: true
@@ -73,9 +68,7 @@ checks:
     xray: true
     freecam: true
 
-  # -------------------------------------------------
-  # 4. EXPLOITS & PACKETS (Seguridad del Servidor)
-  # -------------------------------------------------
+  # 4. Exploits y Seguridad de Paquetes (Anti-Crash y Anticheat Bypass)
   exploits:
     badpackets: true
     pingspoof: true
@@ -90,22 +83,27 @@ checks:
     command-injection: true
     anticheat-bypass: true
 
-  # -------------------------------------------------
-  # 5. VISUALS (Módulos de Cliente / Opcionales)
-  # -------------------------------------------------
+  # 5. Visuales / Cliente (Opcionales)
   visuals:
     playeresp: true
     tracers: true
 
 # ---------------------------------------------------
-# SANCTION MENU CONFIGURATION (/bloon sanciones)
+# MENÚ DE SANCIONES Y GUI DE ADMINISTRACIÓN (/bloon sanciones)
 # ---------------------------------------------------
 sanctions:
-  ejemplo:
-    name: "&cEjemplo de sanción"
-    material: PLAYER_HEAD
-    owner: Notch
+  kick_player:
+    name: "&eExpulsar Jugador"
+    material: FEATHER
     lore:
-      - "&7Ejemplo de entrada"
-      - "&eConfigúrala en config.yml"
-    command: "say Sanción de ejemplo para %player%"
+      - "&7Haz clic para expulsar"
+      - "&7al jugador seleccionado."
+    command: "kick %player% &cExpulsado por los administradores."
+    
+  ban_player:
+    name: "&cBanear Permanentemente"
+    material: NETHERITE_SWORD
+    lore:
+      - "&7Aplica un baneo permanente"
+      - "&7por uso de hacks confirmados [V]."
+    command: "ban %player% &c[BloonAC] Bateado por uso de trampas."
