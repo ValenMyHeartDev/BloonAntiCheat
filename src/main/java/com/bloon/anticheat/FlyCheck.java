@@ -26,7 +26,13 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("bloon.bypass") || player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming() || player.isRiptiding()) {
+        // Si fue ignorado expresamente por comando, el anticheat no procesa nada
+        if (CheckManager.isIgnored(player)) {
+            return;
+        }
+
+        // Se quita la verificación de OP/bypass por defecto si quieres que a los OP también los controle
+        if (player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming() || player.isRiptiding()) {
             lastY.remove(player.getUniqueId());
             return;
         }
@@ -38,7 +44,6 @@ public class FlyCheck implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        // Si está en el suelo, líquidos o rodeado de bloques cercanos (esquinas / paredes), permitimos el movimiento para evitar falsos positivos
         boolean nearBlocks = !player.getLocation().getBlock().getRelative(BlockFace.DOWN).isEmpty() ||
                              !player.getLocation().getBlock().getRelative(BlockFace.NORTH).isEmpty() ||
                              !player.getLocation().getBlock().getRelative(BlockFace.SOUTH).isEmpty() ||
@@ -52,8 +57,7 @@ public class FlyCheck implements Listener {
 
         double dy = to.getY() - from.getY();
         double previousDy = lastY.getOrDefault(player.getUniqueId(), 0.0);
-        
-        // Detección estricta de vuelo estático sin colisión lateral legítima
+
         boolean isFloating = (dy > -0.02 && dy < 0.08) && (previousDy > -0.02 && previousDy < 0.08) && !nearBlocks;
         boolean isIllegalAscent = dy > 0.42 && player.getFallDistance() == 0;
 
