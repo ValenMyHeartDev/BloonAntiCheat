@@ -14,15 +14,21 @@ public class Main extends JavaPlugin {
         instance = this;
         saveDefaultConfig();
 
+        // 1. Registrar Comando Principal y TabCompleter
         if (getCommand("bloon") != null) {
-            getCommand("bloon").setExecutor(new BloonCommand(this));
+            BloonCommand bloonCommand = new BloonCommand(this);
+            getCommand("bloon").setExecutor(bloonCommand);
+            getCommand("bloon").setTabCompleter(bloonCommand);
         }
 
-        // Registrar los Listeners de eventos
+        // 2. Registrar TODOS los Listeners de Detección y Menús
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new TriggerCheck(this), this);
+        getServer().getPluginManager().registerEvents(new FlyCheck(this), this);
+        getServer().getPluginManager().registerEvents(new ReachCheck(this), this);
+        getServer().getPluginManager().registerEvents(new AutoClickerCheck(this), this);
 
-        getLogger().info("¡Bloon AntiCheat V1 cargado y activado correctamente con TriggerBot!");
+        getLogger().info("¡Bloon AntiCheat V1 cargado y activado correctamente con todas sus detecciones!");
     }
 
     @Override
