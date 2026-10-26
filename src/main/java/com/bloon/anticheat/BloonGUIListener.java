@@ -2,6 +2,7 @@ package com.bloon.anticheat;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,14 +13,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class BloonGUIListener implements Listener {
 
     private final Main plugin;
-    // Almacenamos temporalmente qué staff está sancionando a qué objetivo y el tipo (BAN/MUTE)
-    private static final java.util.Map<UUID, TargetSelection> targetCache = new java.util.HashMap<>();
+    private static final Map<UUID, TargetSelection> targetCache = new HashMap<>();
 
     private static class TargetSelection {
         UUID targetUUID;
@@ -38,18 +40,18 @@ public class BloonGUIListener implements Listener {
         Player staff = (Player) event.getWhoClicked();
         String title = event.getView().getTitle();
 
-        if (title.startsWith("§8[§cBloonAC§8]")) {
+        if (title.contains("BloonAC")) {
             event.setCancelled(true);
             ItemStack clicked = event.getCurrentItem();
             if (clicked == null || clicked.getType() == Material.AIR) return;
 
-            // 1. Menú Principal de Sanciones (Lista de baneados)
-            if (title.equals("§8[§cBloonAC§8] Sanciones Activas")) {
+            // 1. Menú: Sanciones Activas
+            if (title.contains("Sanciones Activas")) {
                 return;
             }
 
-            // 2. Menú para Seleccionar Jugador Online (/bloon banear)
-            if (title.equals("§8[§cBloonAC§8] Seleccionar Jugador")) {
+            // 2. Menú: Seleccionar Jugador
+            if (title.contains("Seleccionar Jugador")) {
                 if (clicked.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) clicked.getItemMeta();
                     if (meta != null && meta.getOwningPlayer() != null) {
@@ -65,8 +67,8 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 3. Menú para Elegir Acción (Banear o Mutear)
-            if (title.equals("§8[§cBloonAC§8] Elegir Sanción")) {
+            // 3. Menú: Elegir Sanción (Ban o Mute)
+            if (title.contains("Elegir Sanción")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
 
@@ -80,8 +82,8 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 4. Menú de Duración
-            if (title.contains("Duración")) {
+            // 4. Menú: Seleccionar Duración
+            if (title.contains("Seleccionar Duración")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
 
@@ -93,15 +95,15 @@ public class BloonGUIListener implements Listener {
                 return;
             }
 
-            // 5. Menú de Razones
-            if (title.equals("§8[§cBloonAC§8] Seleccionar Razón")) {
+            // 5. Menú: Seleccionar Razón
+            if (title.contains("Seleccionar Razón")) {
                 TargetSelection sel = targetCache.get(staff.getUniqueId());
                 if (sel == null) return;
 
                 ItemMeta meta = clicked.getItemMeta();
                 if (meta != null && meta.getDisplayName() != null) {
                     String reason = meta.getDisplayName();
-                    if (sel.actionType.equals("BAN")) {
+                    if ("BAN".equals(sel.actionType)) {
                         SanctionsManager.banPlayer(sel.targetUUID, sel.targetName, reason, sel.duration);
                         staff.sendMessage("§a[BloonAC] ¡Jugador " + sel.targetName + " baneado exitosamente!");
                     } else {
@@ -138,20 +140,24 @@ public class BloonGUIListener implements Listener {
         
         ItemStack ban = new ItemStack(Material.RED_WOOL);
         ItemMeta bm = ban.getItemMeta();
-        bm.setDisplayName("§c§lBANEAR");
-        List<String> loreB = new ArrayList<>();
-        loreB.add("§7Sancionar a " + targetName + " fuera del servidor.");
-        bm.setLore(loreB);
-        ban.setItemMeta(bm);
+        if (bm != null) {
+            bm.setDisplayName("§c§lBANEAR");
+            List<String> loreB = new ArrayList<>();
+            loreB.add("§7Sancionar a " + targetName + " fuera del servidor.");
+            bm.setLore(loreB);
+            ban.setItemMeta(bm);
+        }
         inv.setItem(11, ban);
 
         ItemStack mute = new ItemStack(Material.YELLOW_WOOL);
         ItemMeta mm = mute.getItemMeta();
-        mm.setDisplayName("§e§lMUTEAR");
-        List<String> loreM = new ArrayList<>();
-        loreM.add("§7Silenciar temporalmente a " + targetName + ".");
-        mm.setLore(loreM);
-        mute.setItemMeta(mm);
+        if (mm != null) {
+            mm.setDisplayName("§e§lMUTEAR");
+            List<String> loreM = new ArrayList<>();
+            loreM.add("§7Silenciar temporalmente a " + targetName + ".");
+            mm.setLore(loreM);
+            mute.setItemMeta(mm);
+        }
         inv.setItem(15, mute);
 
         staff.openInventory(inv);
@@ -160,24 +166,26 @@ public class BloonGUIListener implements Listener {
     private void openDurationMenu(Player staff, String type) {
         Inventory inv = Bukkit.createInventory(null, 27, "§8[§cBloonAC§8] Seleccionar Duración");
         
-        if (type.equals("MUTE")) {
-            // Muteos de 1d a 30d y Permanente
+        if ("MUTE".equals(type)) {
             String[] durations = {"1 Día", "3 Días", "7 Días", "14 Días", "30 Días", "Permanente"};
             for (int i = 0; i < durations.length; i++) {
                 ItemStack item = new ItemStack(Material.CLOCK);
                 ItemMeta m = item.getItemMeta();
-                m.setDisplayName(durations[i]);
-                item.setItemMeta(m);
+                if (m != null) {
+                    m.setDisplayName(durations[i]);
+                    item.setItemMeta(m);
+                }
                 inv.setItem(10 + i, item);
             }
         } else {
-            // Baneos de 15d hasta 200d y Permanente
             String[] durations = {"15 Días", "30 Días", "60 Días", "90 Días", "200 Días", "Permanente"};
             for (int i = 0; i < durations.length; i++) {
                 ItemStack item = new ItemStack(Material.ANVIL);
                 ItemMeta m = item.getItemMeta();
-                m.setDisplayName(durations[i]);
-                item.setItemMeta(m);
+                if (m != null) {
+                    m.setDisplayName(durations[i]);
+                    item.setItemMeta(m);
+                }
                 inv.setItem(10 + i, item);
             }
         }
@@ -191,8 +199,10 @@ public class BloonGUIListener implements Listener {
         for (int i = 0; i < reasons.length; i++) {
             ItemStack item = new ItemStack(Material.PAPER);
             ItemMeta m = item.getItemMeta();
-            m.setDisplayName(reasons[i]);
-            item.setItemMeta(m);
+            if (m != null) {
+                m.setDisplayName(reasons[i]);
+                item.setItemMeta(m);
+            }
             inv.setItem(10 + i, item);
         }
         staff.openInventory(inv);
