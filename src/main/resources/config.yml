@@ -1,4 +1,10 @@
-# Bloon AntiCheat V1
+# ===================================================
+#           BLOON ANTICHEAT V1 - CONFIG
+# ===================================================
+
+settings:
+  prefix: "&8[&cBloonAC&8]"
+
 punishments:
   triggerbot:
     enabled: true
@@ -8,10 +14,17 @@ punishments:
 checks:
   TriggerBot:
     enabled: false
-    # Placeholder configuration for a future TriggerBot detection check.
     buffer-decay-per-second: 0.25
+  autoclicker:
+    enabled: true
+    max-cps: 18
+  fly:
+    enabled: true
+  reach:
+    enabled: true
+    max-distance: 4.2
 
-# Entries shown in /bloon sanciones. Keys are unique IDs.
+# Entradas visuales que aparecen en /bloon menu o /bloon sanciones.
 sanctions:
   ejemplo:
     name: "&cEjemplo de sanción"
