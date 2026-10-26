@@ -2,9 +2,10 @@ package com.bloon.anticheat;
 
 import java.util.UUID;
 
-public final class PlayerData {
+public class PlayerData {
+
     private final UUID uuid;
-    private double triggerBotBuffer;
+    private double triggerBuffer = 0.0;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -15,22 +16,14 @@ public final class PlayerData {
     }
 
     public double getTriggerBuffer() {
-        return triggerBotBuffer;
+        return triggerBuffer;
+    }
+
+    public void setTriggerBuffer(double triggerBuffer) {
+        this.triggerBuffer = triggerBuffer;
     }
 
     public void addTriggerBuffer(double amount) {
-        if (amount > 0) {
-            triggerBotBuffer += amount;
-        }
-    }
-
-    public void reduceTriggerBuffer(double amount) {
-        if (amount > 0) {
-            triggerBotBuffer = Math.max(0, triggerBotBuffer - amount);
-        }
-    }
-
-    public void resetBuffer() {
-        triggerBotBuffer = 0;
+        this.triggerBuffer += amount;
     }
 }
