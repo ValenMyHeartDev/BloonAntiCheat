@@ -14,13 +14,12 @@ public class TriggerCheck implements Listener {
 
     private final Main plugin;
     private final HashMap<UUID, Long> lastAttackTime = new HashMap<>();
-    private final HashMap<UUID, Integer> triggerBuffer = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
         Player player = (Player) event.getDamager();
@@ -39,38 +38,21 @@ public class TriggerCheck implements Listener {
         long diff = now - last;
         lastAttackTime.put(uuid, now);
 
-        int buffer = triggerBuffer.getOrDefault(uuid, 0);
-
-        // Sensibilidad aumentada: Margen de milisegundos más amplio y mayor ganancia de búfer
-        if (diff < 180 && diff > 0) {
-            buffer += 3; // Sube mucho más rápido ante cualquier patrón constante
-        } else if (diff >= 180 && diff < 300) {
-            buffer += 1;
-        } else {
-            // Decaimiento lento para retener la sospecha en tramposos
-            buffer = Math.max(0, buffer - 1);
-        }
-
-        triggerBuffer.put(uuid, buffer);
-
-        // Umbral ultrabajo: Con apenas 3 puntos acumulados salta la alerta y el bloqueo
-        int threshold = 3;
-
-        if (buffer >= threshold) {
+        // Umbral de alta sensibilidad: Cualquier golpe con un intervalo menor a 220ms será interceptado de inmediato
+        // (Un humano jugando limpio rara vez baja de 250-300ms constantes en cada golpe de forma perfecta)
+        if (diff > 0 && diff < 220) {
             event.setCancelled(true);
 
-            // Alerta inmediata de nivel V si es muy rápido, o P
-            AlertsUtil.AlertType alertType = (diff < 90) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
+            // Clasificación automática de nivel según la velocidad inhumana
+            AlertsUtil.AlertType alertType = (diff < 100) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
+            // Envía la alerta obligatoria a consola y staff con los niveles F/P/V configurados
             AlertsUtil.sendAlert(
                 player, 
                 "TriggerBot", 
-                "Ataque automatizado (Intervalo: " + diff + "ms | Buffer: " + buffer + ")", 
+                "Ataque automatizado bloqueado (Intervalo: " + diff + "ms)", 
                 alertType
             );
-
-            // Reseteo parcial para continuar frenando golpes consecutivos
-            triggerBuffer.put(uuid, 1);
         }
     }
 }
