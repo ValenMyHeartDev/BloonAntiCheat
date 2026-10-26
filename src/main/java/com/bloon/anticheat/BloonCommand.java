@@ -1,10 +1,10 @@
 package com.bloon.anticheat;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,29 +19,33 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            if (!sender.hasPermission("bloon.admin")) {
-                sender.sendMessage(ChatColor.RED + "No tienes permiso para ejecutar este comando.");
-                return true;
-            }
-            plugin.reloadConfig();
-            sender.sendMessage(ChatColor.GREEN + "[BloonAC] Configuración recargada correctamente.");
+        if (!sender.hasPermission("bloon.admin")) {
+            sender.sendMessage("§cNo tienes permisos para usar este comando.");
             return true;
         }
 
-        // Menú de ayuda con la leyenda de los niveles de alerta (F, P, V)
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&8&m-----------------------------------"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c&lBloon AntiCheat V1 &7- Ayuda & Niveles"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&8&m-----------------------------------"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&f/bloon &7- Muestra este menú de ayuda"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&f/bloon reload &7- Recarga la configuración"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&e&lNiveles de Alerta:"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', " &e[F] &7F - No Confirmable (Ligeros desfases / Ping)"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', " &6[P] &7P - Posiblemente (Patrón sospechoso continuo)"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', " &c[V] &7V - Cheat Confirmado (Uso flagrante de hacks)"));
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&8&m-----------------------------------"));
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+            sender.sendMessage("§8[§bBloonAC§8] §7Comandos disponibles:");
+            sender.sendMessage("§e/bloon reload §7- Recarga la configuración del plugin.");
+            sender.sendMessage("§e/bloon menu §7- Muestra el estado y menú del anticheat.");
+            return true;
+        }
 
+        if (args[0].equalsIgnoreCase("reload")) {
+            plugin.reloadConfig();
+            sender.sendMessage("§a[BloonAC] ¡Configuración recargada exitosamente!");
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("menu")) {
+            sender.sendMessage("§8================ §bBloon AntiCheat §8================");
+            sender.sendMessage("§7Estado del servidor: §aProtegido");
+            sender.sendMessage("§7Módulo Fly: " + (plugin.getConfig().getBoolean("checks.movement.fly.enabled") ? "§aActivado" : "§cDesactivado"));
+            sender.sendMessage("§8=================================================");
+            return true;
+        }
+
+        sender.sendMessage("§cComando desconocido. Usa §e/bloon help§c.");
         return true;
     }
 
@@ -51,6 +55,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             completions.add("help");
             completions.add("reload");
+            completions.add("menu");
         }
         return completions;
     }
