@@ -22,6 +22,7 @@ public class FlyCheck implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
+        // Si está en creativo o espectador, o tiene permisos de bypass, se ignora
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (player.isFlying() || player.isInsideVehicle() || player.hasPermission("bloon.bypass")) return;
 
@@ -34,16 +35,20 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
+        // Ignoramos si está cayendo o quieto
         if (deltaY <= 0) return;
+
+        // Si está cerca de bloques seguros (agua, escaleras, andamios, telarañas, etc.)
         if (isNearSafeBlock(player.getLocation())) return;
 
-        // Si intenta volar o flotar de forma ilegal
-        if (!player.isOnGround() && deltaY > 0.45) {
-            // 1. ACCIÓN PRINCIPAL: Hace retroceder al jugador a su posición anterior legítima (Anula el cheat)
-            event.setTo(from);
+        // Detección estricta: si no está en el suelo y sube más de lo que permite un salto normal en supervivencia (> 0.42)
+        if (!player.isOnGround() && deltaY > 0.419999999999998 && !player.getLocation().getBlock().getType().name().contains("STEP")) {
             
-            // 2. Notificar al staff mediante el sistema de alertas
-            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Movimiento vertical bloqueado (DeltaY: " + String.format("%.2f", deltaY) + ")");
+            // 1. ROLLBACK: Devuelve al jugador a la ubicación anterior legítima
+            event.setTo(from);
+
+            // 2. Alerta al staff y a la consola del hosting
+            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Vuelo bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
         }
     }
 
@@ -64,7 +69,10 @@ public class FlyCheck implements Listener {
                         typeName.contains("LADDER") || 
                         typeName.contains("VINE") || 
                         typeName.contains("COBWEB") || 
-                        typeName.contains("SLIME")) {
+                        typeName.contains("SLIME") ||
+                        typeName.contains("SCAFFOLDING") ||
+                        typeName.contains("SLAB") ||
+                        typeName.contains("STAIRS")) {
                         return true;
                     }
                 }
