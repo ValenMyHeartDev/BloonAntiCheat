@@ -13,6 +13,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class BloonCommand implements CommandExecutor, TabCompleter {
 
@@ -31,8 +33,10 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
             sender.sendMessage("§8[§bBloonAC§8] §7Comandos disponibles:");
-            sender.sendMessage("§e/bloon reload §7- Recarga la configuración del plugin.");
-            sender.sendMessage("§e/bloon menu §7- Abre el panel gráfico de control y sanciones.");
+            sender.sendMessage("§e/bloon reload §7- Recarga la configuración.");
+            sender.sendMessage("§e/bloon menu §7- Panel general del anticheat.");
+            sender.sendMessage("§e/bloon sanciones §7- Lista interactiva de jugadores baneados.");
+            sender.sendMessage("§e/bloon banear §7- Abre el menú para banear/mutear usuarios.");
             return true;
         }
 
@@ -42,14 +46,15 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args[0].equalsIgnoreCase("menu")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cEste comando solo puede ser ejecutado por un jugador.");
-                return true;
-            }
+        if (args[0].equalsIgnoreCase("sanciones")) {
+            if (!(sender instanceof Player)) return true;
+            openBannedPlayersMenu((Player) sender);
+            return true;
+        }
 
-            Player player = (Player) sender;
-            openSanctionsMenu(player);
+        if (args[0].equalsIgnoreCase("banear")) {
+            if (!(sender instanceof Player)) return true;
+            BloonGUIListener.openPlayerListMenu((Player) sender);
             return true;
         }
 
@@ -57,48 +62,26 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void openSanctionsMenu(Player player) {
-        Inventory menu = Bukkit.createInventory(null, 27, "§8[§cBloonAC§8] Panel de Sanciones");
+    private void openBannedPlayersMenu(Player player) {
+        Inventory inv = Bukkit.createInventory(null, 36, "§8[§cBloonAC§8] Sanciones Activas");
+        Map<UUID, SanctionsManager.SanctionData> bans = SanctionsManager.getBannedPlayers();
 
-        // Ítem 1: Estado General
-        ItemStack info = new ItemStack(Material.BOOK);
-        ItemMeta infoMeta = info.getItemMeta();
-        if (infoMeta != null) {
-            infoMeta.setDisplayName("§bEstado de BloonAC");
-            List<String> lore = new ArrayList<>();
-            lore.add("§7Protección contra Fly: " + (plugin.getConfig().getBoolean("checks.movement.fly.enabled", true) ? "§aActivo" : "§cInactivo"));
-            lore.add("§7Protección contra ClickTP: " + (plugin.getConfig().getBoolean("checks.movement.clicktp.enabled", true) ? "§aActivo" : "§cInactivo"));
-            
-            // Corrección limpia compatible con todas las versiones de Bukkit
-            infoMeta.setLore(lore);
-            info.setItemMeta(infoMeta);
+        for (SanctionsManager.SanctionData data : bans.values()) {
+            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+            ItemMeta meta = skull.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§c" + data.getPlayerName());
+                List<String> lore = new ArrayList<>();
+                lore.add("§7Baneado T: §e" + data.getDuration());
+                lore.add("§7Razón: §f" + data.getReason());
+                meta.setLore(lore);
+                skull.setItemMeta(meta);
+            }
+            inv.addItem(skull);
         }
-        menu.setItem(4, info);
 
-        // Ítem 2: Alertas de Staff
-        ItemStack alertToggle = new ItemStack(Material.REDSTONE_BLOCK);
-        ItemMeta alertMeta = alertToggle.getItemMeta();
-        if (alertMeta != null) {
-            alertMeta.setDisplayName("§c§lAlertas de Staff");
-            List<String> lore = new ArrayList<>();
-            lore.add("§7Las alertas en tiempo real");
-            lore.add("§7están activas para el staff.");
-            alertMeta.setLore(lore);
-            alertToggle.setItemMeta(alertMeta);
-        }
-        menu.setItem(11, alertToggle);
-
-        // Ítem 3: Recargar config desde la GUI
-        ItemStack reloadItem = new ItemStack(Material.EMERALD);
-        ItemMeta reloadMeta = reloadItem.getItemMeta();
-        if (reloadMeta != null) {
-            reloadMeta.setDisplayName("§a§lRecargar Configuración");
-            reloadItem.setItemMeta(reloadMeta);
-        }
-        menu.setItem(15, reloadItem);
-
-        player.openInventory(menu);
-        player.sendMessage("§a[BloonAC] Abriendo el panel de control y sanciones...");
+        player.openInventory(inv);
+        player.sendMessage("§a[BloonAC] Abriendo lista de jugadores sancionados...");
     }
 
     @Override
@@ -108,6 +91,8 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             completions.add("help");
             completions.add("reload");
             completions.add("menu");
+            completions.add("sanciones");
+            completions.add("banear");
         }
         return completions;
     }
