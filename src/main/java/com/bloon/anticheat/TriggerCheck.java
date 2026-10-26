@@ -16,7 +16,6 @@ import java.util.List;
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
-    // Guardamos la lista de marcas de tiempo (milisegundos) de los últimos clics de cada jugador
     private final HashMap<UUID, List<Long>> clickTimestamps = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
@@ -25,7 +24,6 @@ public class TriggerCheck implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
-        // Solo nos interesan los clics izquierdos (intentos de golpear/atacar al aire o bloques)
         if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
             return;
         }
@@ -34,33 +32,34 @@ public class TriggerCheck implements Listener {
         if (player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("punishments.triggerbot.enabled", true) && 
-            !config.getBoolean("checks.TriggerBot.enabled", true)) {
-            return;
-        }
+        
+        // Verificamos si el autoclicker o triggerbot están habilitados en la config
+        boolean autoClickerEnabled = config.getBoolean("checks.autoclicker.enabled", true);
+        boolean triggerBotEnabled = config.getBoolean("checks.TriggerBot.enabled", true) || 
+                                    config.getBoolean("punishments.triggerbot.enabled", true);
+
+        if (!autoClickerEnabled && !triggerBotEnabled) return;
 
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
 
         List<Long> timestamps = clickTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
-
-        // Añadir el clic actual
         timestamps.add(now);
 
-        // Limpiar clics más antiguos de 1 segundo (1000 ms) para medir los CPS reales
+        // Limpiamos los clics de hace más de 1 segundo para obtener los CPS reales exactos
         timestamps.removeIf(time -> now - time > 1000);
 
-        // Si el jugador supera los 15 clics por segundo (CPS inhumano para juego manual sostenido)
         int currentCPS = timestamps.size();
-        int maxAllowedCPS = config.getInt("checks.autoclicker.max-cps", 16);
+        
+        // Obtenemos el límite máximo de CPS definido en tu config.yml (por defecto 18)
+        int maxAllowedCPS = config.getInt("checks.autoclicker.max-cps", 18);
 
         if (currentCPS > maxAllowedCPS) {
-            // Cancelar la acción para evitar la ventaja
             event.setCancelled(true);
 
-            AlertsUtil.sendAlert(player, "TriggerBot / AutoClicker", "CPS excesivos detectados (" + currentCPS + " CPS)");
+            AlertsUtil.sendAlert(player, "AutoClicker / TriggerBot", "CPS excesivos detectados (" + currentCPS + " / " + maxAllowedCPS + " máx)");
 
-            // Limpiar la lista parcialmente para evitar spam consecutivo de alertas
+            // Limpiamos parcialmente la lista para evitar bucles de alertas masivas en el mismo segundo
             timestamps.clear();
         }
     }
