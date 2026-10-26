@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -32,16 +33,18 @@ public class PunishmentMenu {
         Inventory gui = Bukkit.createInventory(null, 54, TITLE);
 
         FileConfiguration config = plugin.getConfig();
-        if (config.isConfigurationSection("sanctions")) {
+        ConfigurationSection sanctionsSection = config.getConfigurationSection("sanctions");
+
+        if (sanctionsSection != null) {
             int slot = 0;
-            for (String key : config.getConfigurationSection("sanctions").getKeys(false)) {
+            for (String key : sanctionsSection.getKeys(false)) {
                 if (slot >= 54) break;
 
-                String playerName = config.getString("sanctions." + key + ".player");
-                String type = config.getString("sanctions." + key + ".type");
-                String reason = config.getString("sanctions." + key + ".reason");
-                String duration = config.getString("sanctions." + key + ".duration");
-                String date = config.getString("sanctions." + key + ".date");
+                String playerName = config.getString("sanctions." + key + ".player", "Desconocido");
+                String type = config.getString("sanctions." + key + ".type", "N/A");
+                String reason = config.getString("sanctions." + key + ".reason", "N/A");
+                String duration = config.getString("sanctions." + key + ".duration", "N/A");
+                String date = config.getString("sanctions." + key + ".date", "N/A");
 
                 ItemStack skull = createPunishmentSkull(playerName, type, reason, duration, date);
                 gui.setItem(slot, skull);
@@ -57,8 +60,12 @@ public class PunishmentMenu {
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
 
         if (meta != null) {
-            OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
-            meta.setOwningPlayer(target);
+            try {
+                OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+                meta.setOwningPlayer(target);
+            } catch (Exception ignored) {
+                // Previene crash si la cabeza no se puede resolver en servidores offline
+            }
 
             meta.setDisplayName(ChatColor.RED + ChatColor.BOLD.toString() + playerName);
 
