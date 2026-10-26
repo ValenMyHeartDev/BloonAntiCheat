@@ -35,14 +35,14 @@ public class CheckManager {
     public static boolean toggleIgnore(UUID uuid) {
         if (ignoredPlayers.contains(uuid)) {
             ignoredPlayers.remove(uuid);
-            return false; // Ya no está ignorado (vuelve a ser detectado)
+            return false; // Vuelve a ser detectado
         } else {
             ignoredPlayers.add(uuid);
-            return true;  // Ahora está ignorado (puede usar hacks libremente)
+            return true;  // Ahora puede usar hacks sin logs ni bloqueos
         }
     }
 
-    // Método que evalúa si un jugador debe ser ignorado por completo por el anticheat
+    // Retorna true solo si el jugador fue ignorado con /bloon ignore
     public static boolean isIgnored(Player player) {
         return ignoredPlayers.contains(player.getUniqueId());
     }
