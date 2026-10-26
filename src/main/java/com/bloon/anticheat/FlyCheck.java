@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 
@@ -18,16 +19,23 @@ public class FlyCheck implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        // Si está en creativo, espectador o tiene permiso de bypass, se ignora
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
         if (player.isFlying() || player.isInsideVehicle() || player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
         if (!config.getBoolean("checks.fly.enabled", true)) return;
+
+        PlayerData data = plugin.getPlayerData(player.getUniqueId());
+
+        // Si el jugador está legalmente en el suelo, actualizamos su última posición segura
+        if (player.isOnGround() && !isNearSafeBlock(player.getLocation())) {
+            data.setLastSafeLocation(player.getLocation());
+            return;
+        }
 
         Location from = event.getFrom();
         Location to = event.getTo();
@@ -35,20 +43,22 @@ public class FlyCheck implements Listener {
 
         double deltaY = to.getY() - from.getY();
 
-        // Ignoramos si el jugador está cayendo o quieto en el mismo nivel
         if (deltaY <= 0) return;
-
-        // Si está cerca de bloques seguros (agua, escaleras, losas, andamios, etc.)
         if (isNearSafeBlock(player.getLocation())) return;
 
-        // Detección estricta: si no está en el suelo y sube más de lo que permite un salto normal en supervivencia (> 0.42)
-        if (!player.isOnGround() && deltaY > 0.419999999999998) {
-            
-            // 1. ROLLBACK: Devuelve al jugador a la ubicación anterior legítima de forma instantánea
-            event.setTo(from);
+        // Detección de elevación ilegal en supervivencia
+        if (!player.isOnGround() && deltaY > 0.4199) {
+            // 1. CANCELAR EL MOVIMIENTO
+            event.setCancelled(true);
 
-            // 2. Envía la alerta al staff en el juego y a la consola del hosting
-            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Vuelo bloqueado (DeltaY: " + String.format("%.3f", deltaY) + ")");
+            // 2. ROLLBACK: Teletransportar al suelo donde tocó tierra por última vez
+            if (data.getLastSafeLocation() != null) {
+                player.teleport(data.getLastSafeLocation());
+            } else {
+                player.teleport(from);
+            }
+
+            AlertsUtil.sendAlert(player, "Fly / Vuelo Ilegal", "Devuelto a posición segura (DeltaY: " + String.format("%.3f", deltaY) + ")");
         }
     }
 
