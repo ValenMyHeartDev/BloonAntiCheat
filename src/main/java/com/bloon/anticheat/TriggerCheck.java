@@ -5,26 +5,32 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
-    private final HashMap<UUID, Long> lastAttackTime = new HashMap<>();
-    private final HashMap<UUID, Integer> rapidHitsCounter = new HashMap<>();
+    // Guardamos la lista de marcas de tiempo (milisegundos) de los últimos clics de cada jugador
+    private final HashMap<UUID, List<Long>> clickTimestamps = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onAttack(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player)) return;
-        Player player = (Player) event.getDamager();
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInteract(PlayerInteractEvent event) {
+        // Solo nos interesan los clics izquierdos (intentos de golpear/atacar al aire o bloques)
+        if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
+            return;
+        }
 
+        Player player = event.getPlayer();
         if (player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
@@ -33,37 +39,29 @@ public class TriggerCheck implements Listener {
             return;
         }
 
-        long currentTime = System.currentTimeMillis();
-        long lastTime = lastAttackTime.getOrDefault(player.getUniqueId(), 0L);
-        long diff = currentTime - lastTime;
-        lastAttackTime.put(player.getUniqueId(), currentTime);
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
 
-        // Si el jugador tarda más de 600ms en dar el siguiente golpe, se resetea el contador (PvP normal)
-        if (diff > 600) {
-            rapidHitsCounter.put(player.getUniqueId(), 0);
-            return;
-        }
+        List<Long> timestamps = clickTimestamps.computeIfAbsent(uuid, k -> new ArrayList<>());
 
-        // Un TriggerBot o AutoClicker ataca a intervalos extremadamente cortos y automatizados (< 90ms)
-        if (diff < 90) {
-            int count = rapidHitsCounter.getOrDefault(player.getUniqueId(), 0) + 1;
-            rapidHitsCounter.put(player.getUniqueId(), count);
+        // Añadir el clic actual
+        timestamps.add(now);
 
-            // Con apenas 3 golpes consecutivos a velocidad de máquina, bloquea el ataque y avisa al instante
-            if (count >= 3) {
-                event.setCancelled(true);
+        // Limpiar clics más antiguos de 1 segundo (1000 ms) para medir los CPS reales
+        timestamps.removeIf(time -> now - time > 1000);
 
-                AlertsUtil.sendAlert(player, "TriggerBot", "Ataque automatizado bloqueado (Intervalo: " + diff + "ms)");
-                
-                // Reiniciamos el contador tras la sanción
-                rapidHitsCounter.put(player.getUniqueId(), 0);
-            }
-        } else {
-            // Si el intervalo es humano (>= 90ms), reducimos el contador de sospecha gradualmente
-            int count = rapidHitsCounter.getOrDefault(player.getUniqueId(), 0);
-            if (count > 0) {
-                rapidHitsCounter.put(player.getUniqueId(), count - 1);
-            }
+        // Si el jugador supera los 15 clics por segundo (CPS inhumano para juego manual sostenido)
+        int currentCPS = timestamps.size();
+        int maxAllowedCPS = config.getInt("checks.autoclicker.max-cps", 16);
+
+        if (currentCPS > maxAllowedCPS) {
+            // Cancelar la acción para evitar la ventaja
+            event.setCancelled(true);
+
+            AlertsUtil.sendAlert(player, "TriggerBot / AutoClicker", "CPS excesivos detectados (" + currentCPS + " CPS)");
+
+            // Limpiar la lista parcialmente para evitar spam consecutivo de alertas
+            timestamps.clear();
         }
     }
 }
