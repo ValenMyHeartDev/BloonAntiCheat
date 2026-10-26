@@ -27,12 +27,13 @@ public class TriggerCheck implements Listener {
             return;
         }
 
-        // Obtenemos o creamos los datos en memoria del jugador
+        // Obtenemos los datos del jugador desde el almacenamiento principal
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
-        
-        // Incrementamos el buffer por cada ataque registrado
-        double currentBuffer = data.getTriggerBuffer() + 1.0;
-        data.setTriggerBuffer(currentBuffer);
+        if (data == null) return;
+
+        // Incrementamos el buffer de combate
+        data.addTriggerBuffer(1.0);
+        double currentBuffer = data.getTriggerBuffer();
 
         double threshold = config.getDouble("punishments.triggerbot.buffer-threshold", 10.0);
 
@@ -40,7 +41,7 @@ public class TriggerCheck implements Listener {
         if (currentBuffer >= threshold) {
             AlertsUtil.sendAlert(player, "TriggerBot", "Buffer acumulado: " + currentBuffer);
             
-            // Opcional: Reiniciar buffer tras la alerta o aplicar sanción configurada
+            // Reiniciamos el buffer tras emitir la alerta
             data.setTriggerBuffer(0.0);
         }
     }
