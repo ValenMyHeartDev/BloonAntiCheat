@@ -14,18 +14,16 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // 1. Módulo de Movimiento (FlyCheck corregido)
+        // Módulos de Combate y Críticos
+        pm.registerEvents(new TriggerCheck(plugin), plugin);
+        pm.registerEvents(new ReachCheck(plugin), plugin);
+        pm.registerEvents(new PvPCombatCheck(plugin), plugin);
+        pm.registerEvents(new CriticalsCheck(plugin), plugin); // <--- NUEVO
+
+        // Módulos de Movimiento y Exploits
         pm.registerEvents(new FlyCheck(plugin), plugin);
+        pm.registerEvents(new ExploitCheck(plugin), plugin);
 
-        // 2. Módulos de Combate (Verifica que las clases existan en el proyecto)
-        try {
-            pm.registerEvents(new TriggerCheck(plugin), plugin);
-        } catch (NoClassDefFoundError | Exception ignored) {}
-
-        try {
-            pm.registerEvents(new ReachCheck(plugin), plugin);
-        } catch (NoClassDefFoundError | Exception ignored) {}
-
-        plugin.getLogger().info("[BloonAC] ¡Módulos registrados correctamente!");
+        plugin.getLogger().info("[BloonAC] ¡Todos los módulos de combate y movimiento se cargaron correctamente!");
     }
 }
