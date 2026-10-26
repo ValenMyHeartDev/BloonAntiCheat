@@ -3,55 +3,56 @@ package com.bloon.anticheat;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
-import java.util.Map;
 
 public class AutoClickerCheck implements Listener {
 
     private final Main plugin;
-    private final Map<UUID, Integer> clickCounts = new HashMap<>();
-    private final Map<UUID, Long> lastReset = new HashMap<>();
+    private final HashMap<UUID, List<Long>> clicks = new HashMap<>();
 
     public AutoClickerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) {
-            return;
-        }
+        if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         Player player = event.getPlayer();
         if (player.hasPermission("bloon.bypass")) return;
 
         FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("checks.autoclicker.enabled", true)) return;
+        if (!config.getBoolean("checks.combat.autoclicker.enabled", true)) return;
 
         UUID uuid = player.getUniqueId();
-        long currentSecond = System.currentTimeMillis() / 1000;
+        long now = System.currentTimeMillis();
 
-        lastReset.putIfAbsent(uuid, currentSecond);
-        clickCounts.putIfAbsent(uuid, 0);
+        List<Long> times = clicks.computeIfAbsent(uuid, k -> new ArrayList<>());
+        times.add(now);
+        times.removeIf(time -> now - time > 1000);
 
-        if (lastReset.get(uuid) != currentSecond) {
-            int clicks = clickCounts.get(uuid);
-            int maxCps = config.getInt("checks.autoclicker.max-cps", 18);
+        int cps = times.size();
+        int maxCps = config.getInt("checks.combat.autoclicker.max-cps", 16);
 
-            if (clicks > maxCps) {
-                // Notificar mediante el sistema de alertas centralizado
-                AlertsUtil.sendAlert(player, "AutoClicker", "CPS: " + clicks + " (Máx: " + maxCps + ")");
-            }
+        if (cps > maxCps) {
+            event.setCancelled(true);
+            AlertsUtil.AlertType alertType = (cps >= 22) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
 
-            clickCounts.put(uuid, 1);
-            lastReset.put(uuid, currentSecond);
-        } else {
-            clickCounts.put(uuid, clickCounts.get(uuid) + 1);
+            AlertsUtil.sendAlert(
+                player,
+                "AutoClicker",
+                "CPS excesivos (" + cps + " CPS | Máx: " + maxCps + ")",
+                alertType
+            );
+            times.clear();
         }
     }
 }
