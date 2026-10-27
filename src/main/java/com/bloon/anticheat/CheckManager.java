@@ -20,18 +20,27 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // Módulos de Movimiento y Combate
+        // --- Módulos de Movimiento ---
         pm.registerEvents(new FlyCheck(plugin), plugin);
         pm.registerEvents(new ClickTPCheck(plugin), plugin);
+        pm.registerEvents(new SpeedCheck(plugin), plugin);
+        pm.registerEvents(new NoFallCheck(plugin), plugin);
+        pm.registerEvents(new JesusCheck(plugin), plugin);
+
+        // --- Módulos de Combate ---
         pm.registerEvents(new CriticalsCheck(plugin), plugin);
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
+        pm.registerEvents(new KillAuraCheck(plugin), plugin);
+
+        // --- Módulos de Jugador e Interacción ---
+        pm.registerEvents(new FastEatCheck(plugin), plugin);
 
         plugin.getLogger().info("[BloonAC] ¡Todos los módulos de seguridad cargados exitosamente!");
     }
 
-    // Alterna el estado de ignorado para un jugador
+    // Alterna el estado de ignorado para un jugador (Modo prueba/audit)
     public static boolean toggleIgnore(UUID uuid) {
         if (ignoredPlayers.contains(uuid)) {
             ignoredPlayers.remove(uuid);
@@ -42,7 +51,7 @@ public class CheckManager {
         }
     }
 
-    // Retorna true solo si el jugador fue ignorado con /bloon ignore
+    // Retorna true si el jugador fue ignorado con /bloon ignore
     public static boolean isIgnored(Player player) {
         return ignoredPlayers.contains(player.getUniqueId());
     }
