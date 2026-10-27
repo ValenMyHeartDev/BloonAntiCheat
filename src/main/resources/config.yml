@@ -1,120 +1,81 @@
 # ==============================================================================
-#                 BLOON ANTICHEAT (BloonAC) - 
+#                 BLOON ANTICHEAT (BloonAC) 
 # ==============================================================================
-# Configuración calibrada para detección superior y control total de servidores.
-# Todos los módulos ejecutan sanciones y comandos integrados con el sistema GUI.
 
 settings:
   prefix: "&8[&cBloonAC&8] "
   alerts-permission: "bloon.alerts"
   admin-permission: "bloon.admin"
-  
-  # Si es 'true', los administradores con OP activarán los checks a menos que usen /bloon ignore
   check-op-players: true
-  
-  # Si el TPS del servidor cae por debajo de este límite, el anticheat relaja temporalmente las comprobaciones
   min-tps-threshold: 16.5
 
-# ==============================================================================
-# MÓDULOS Y COMPROBACIONES (CHECKS)
-# ==============================================================================
 checks:
-
-  # --------------------------------------------------------------------------
-  # 1. COMBAT CHECKS (Combate, Ayudas de mira y Golpes)
-  # --------------------------------------------------------------------------
   combat:
     reach:
       enabled: true
       max-reach-distance: 3.05
       max-violations: 10
       punishment-command: "bloon banear %player%"
-      
     killaura:
       enabled: true
       max-yaw-rate: 175.0
-      check-multi-target: true
       max-violations: 8
       punishment-command: "bloon banear %player%"
-      
     autoclicker:
       enabled: true
       max-cps: 18
-      detect-consistency: true
       max-violations: 12
       punishment-command: "bloon banear %player%"
-      
     criticals:
       enabled: true
       strict-ground-check: true
       max-violations: 6
       punishment-command: "bloon banear %player%"
-      
     triggerbot:
       enabled: true
       min-aim-delay-ms: 45
       max-violations: 7
       punishment-command: "bloon banear %player%"
 
-  # --------------------------------------------------------------------------
-  # 2. MOVEMENT CHECKS (Movimiento, Velocidad y Física)
-  # --------------------------------------------------------------------------
   movement:
     fly:
       enabled: true
-      max-air-ticks: 12
       max-violations: 8
       punishment-command: "bloon banear %player%"
-      
     speed:
       enabled: true
       max-ground-speed: 0.33
       account-for-ice: true
       max-violations: 10
       punishment-command: "bloon banear %player%"
-      
     clicktp:
       enabled: true
-      max-teleport-distance-squared: 12.0
       max-violations: 3
       punishment-command: "bloon banear %player%"
-      
     nofall:
       enabled: true
       force-damage: true
       min-fall-distance: 3.0
       max-violations: 5
       punishment-command: "bloon banear %player%"
-      
     jesus:
       enabled: true
       cancel-water-walk: true
       max-violations: 6
       punishment-command: "bloon banear %player%"
 
-  # --------------------------------------------------------------------------
-  # 3. PLAYER CHECKS (Interacciones, Consumo y Paquetes)
-  # --------------------------------------------------------------------------
   player:
     fasteat:
       enabled: true
       min-consume-time-ms: 1400
       max-violations: 5
       punishment-command: "bloon banear %player%"
-      
     timer:
       enabled: true
-      max-timer-speed: 1.08
       max-violations: 8
       punishment-command: "bloon banear %player%"
 
-# ==============================================================================
-# SISTEMA DE SANCIONES Y AUDITORÍA
-# ==============================================================================
 sanctions-system:
-  # Permitir baneo automático por IP y Nombre al alcanzar el límite de violaciones (VL)
   auto-ip-ban: true
-  
-  # Duración por defecto si se ejecuta el castigo automático por umbral de violaciones
   default-ban-duration: "30 Días"
   default-ban-reason: "Detección Automática (BloonAC)"
