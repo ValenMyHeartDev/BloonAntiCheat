@@ -8,9 +8,14 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class CriticalsCheck implements Listener {
 
     private final Main plugin;
+    private final Map<UUID, Integer> violationsMap = new HashMap<>();
 
     public CriticalsCheck(Main plugin) {
         this.plugin = plugin;
@@ -21,28 +26,34 @@ public class CriticalsCheck implements Listener {
         if (!(event.getDamager() instanceof Player)) return;
         Player player = (Player) event.getDamager();
 
-        if (player.hasPermission("bloon.bypass") || player.isInsideVehicle() || player.isGliding() || player.isFlying()) {
-            return;
-        }
+        if (CheckManager.isIgnored(player)) return;
 
         FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("checks.combat.criticals", true)) return;
+        if (!config.getBoolean("checks.combat.criticals.enabled", true)) return;
 
-        boolean isOnGround = player.isOnGround();
-        float fallDistance = player.getFallDistance();
+        // Detección de golpes críticos falsos (saltos en paquete estando en suelo)
+        boolean isGrounded = player.isOnGround();
+        boolean isFallDistanceZero = player.getFallDistance() == 0.0;
 
-        // Los clientes de Criticals (Packet / GroundSpoof) simulan una caída o alteran 
-        // la distancia de caída (fallDistance > 0) mientras el jugador está pisando el suelo firme.
-        if (isOnGround && fallDistance > 0.0f) {
+        if (player.getFallDistance() > 0.0 && isGrounded && config.getBoolean("checks.combat.criticals.strict-ground-check", true)) {
             event.setCancelled(true);
+            UUID uuid = player.getUniqueId();
+            int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
+            violationsMap.put(uuid, currentVL);
 
-            String message = "[BloonAC] " + player.getName() + " falló Criticals (GroundSpoof/Packet: fallDist=" + String.format("%.2f", fallDistance) + ")";
-            Bukkit.getLogger().info(message);
+            String alertMessage = "§c[BloonAC] " + player.getName() + " falló Criticals (Suelo falso en ataque) §8[VL: " + currentVL + "]";
 
             for (Player staff : Bukkit.getOnlinePlayers()) {
-                if (staff.hasPermission("bloon.alerts")) {
-                    staff.sendMessage("§c" + message);
+                if (staff.hasPermission(config.getString("settings.alerts-permission", "bloon.alerts"))) {
+                    staff.sendMessage(alertMessage);
                 }
+            }
+
+            int maxVL = config.getInt("checks.combat.criticals.max-violations", 6);
+            if (currentVL >= maxVL) {
+                String cmd = config.getString("checks.combat.criticals.punishment-command", "bloon banear %player%");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
+                violationsMap.put(uuid, 0);
             }
         }
     }
