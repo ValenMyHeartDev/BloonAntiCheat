@@ -1,63 +1,55 @@
 package com.bloon.anticheat;
 
-import org.bukkit.Material;
-import org.bukkit.block.Block;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class PvPCombatCheck implements Listener {
 
     private final Main plugin;
-    private final HashMap<UUID, Long> lastPvpInteraction = new HashMap<>();
+    private final Map<UUID, Integer> violationsMap = new HashMap<>();
 
     public PvPCombatCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        if (player.hasPermission("bloon.bypass")) return;
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onAttack(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+        Player player = (Player) event.getDamager();
+
+        if (CheckManager.isIgnored(player)) return;
 
         FileConfiguration config = plugin.getConfig();
-        Action action = event.getAction();
-        Block clickedBlock = event.getClickedBlock();
+        if (!config.getBoolean("checks.combat.pvpcombat.enabled", true)) return;
 
-        if (clickedBlock == null) return;
+        // Comprobación de combate general / invalidez de objetivo
+        if (event.getEntity().isDead()) {
+            event.setCancelled(true);
+            UUID uuid = player.getUniqueId();
+            int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
+            violationsMap.put(uuid, currentVL);
 
-        if (action == Action.RIGHT_CLICK_BLOCK) {
-            boolean isAnchor = clickedBlock.getType() == Material.RESPAWN_ANCHOR;
-            boolean isBed = clickedBlock.getType().name().contains("_BED");
-
-            if ((isAnchor && config.getBoolean("checks.combat.anchoraura", true)) || 
-                (isBed && config.getBoolean("checks.combat.bedaura", true))) {
-                
-                UUID uuid = player.getUniqueId();
-                long now = System.currentTimeMillis();
-                long last = lastPvpInteraction.getOrDefault(uuid, 0L);
-                long diff = now - last;
-                lastPvpInteraction.put(uuid, now);
-
-                // Sensibilidad al máximo: Menos de 120ms bloquea y alerta
-                if (diff > 0 && diff < 120) {
-                    event.setCancelled(true);
-                    
-                    String hackName = isAnchor ? "AnchorAura" : "BedAura";
-                    AlertsUtil.sendAlert(
-                        player, 
-                        hackName, 
-                        "Uso automatizado instantáneo (" + diff + "ms)", 
-                        AlertsUtil.AlertType.V
-                    );
+            String alertsPerm = config.getString("settings.alerts-permission", "bloon.alerts");
+            for (Player staff : Bukkit.getOnlinePlayers()) {
+                if (staff.hasPermission(alertsPerm)) {
+                    staff.sendMessage("§c[BloonAC] " + player.getName() + " falló PvPCombat (Golpe a objetivo muerto/inválido) §8[VL: " + currentVL + "]");
                 }
+            }
+
+            int maxVL = config.getInt("checks.combat.pvpcombat.max-violations", 6);
+            if (currentVL >= maxVL) {
+                String cmd = config.getString("checks.combat.pvpcombat.punishment-command", "bloon banear %player%");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
+                violationsMap.put(uuid, 0);
             }
         }
     }
