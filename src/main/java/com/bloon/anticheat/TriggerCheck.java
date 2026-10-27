@@ -1,5 +1,6 @@
 package com.bloon.anticheat;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -8,49 +9,37 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
-    private final HashMap<UUID, Long> lastAttackTime = new HashMap<>();
+    private final Map<UUID, Integer> violationsMap = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
-    public void onEntityDamage(EntityDamageByEntityEvent event) {
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onAttack(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
         Player player = (Player) event.getDamager();
 
-        if (player.hasPermission("bloon.bypass")) return;
+        if (CheckManager.isIgnored(player)) return;
 
         FileConfiguration config = plugin.getConfig();
-        boolean triggerBotEnabled = config.getBoolean("checks.TriggerBot.enabled", true) || 
-                                    config.getBoolean("punishments.triggerbot.enabled", true);
+        if (!config.getBoolean("checks.combat.triggerbot.enabled", true)) return;
 
-        if (!triggerBotEnabled) return;
-
+        // Si ataca exactamente en el instante en que la entidad entra en la mira
         UUID uuid = player.getUniqueId();
-        long now = System.currentTimeMillis();
-        long last = lastAttackTime.getOrDefault(uuid, 0L);
-        long diff = now - last;
-        lastAttackTime.put(uuid, now);
-
-        // Umbral ultrasensible: Cancelación inmediata ante cualquier intervalo inferior a 230ms
-        if (diff > 0 && diff < 230) {
+        int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
+        
+        if (currentVL > config.getInt("checks.combat.triggerbot.max-violations", 7)) {
             event.setCancelled(true);
-
-            // Si el golpe ocurre en menos de 80ms es un TriggerBot/Macro descarado -> [V]
-            AlertsUtil.AlertType alertType = (diff < 80) ? AlertsUtil.AlertType.V : AlertsUtil.AlertType.P;
-
-            AlertsUtil.sendAlert(
-                player, 
-                "TriggerBot", 
-                "Ataque robótico bloqueado (Intervalo: " + diff + "ms)", 
-                alertType
-            );
+            String cmd = config.getString("checks.combat.triggerbot.punishment-command", "bloon banear %player%");
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
+            violationsMap.put(uuid, 0);
         }
     }
 }
