@@ -34,24 +34,25 @@ public class CheckManager {
         pm.registerEvents(new PvPCombatCheck(plugin), plugin);
         pm.registerEvents(new KillAuraCheck(plugin), plugin);
 
-        // --- Módulos de Jugador e Interacción ---
+        // --- Módulos de Jugador y Paquetes ---
         pm.registerEvents(new FastEatCheck(plugin), plugin);
+        pm.registerEvents(new TimerCheck(plugin), plugin);
 
         plugin.getLogger().info("[BloonAC] ¡Todos los módulos de seguridad cargados exitosamente!");
     }
 
-    // Alterna el estado de ignorado para un jugador (Modo prueba/audit)
+    // Alterna el estado de ignorado para un jugador (/bloon ignore)
     public static boolean toggleIgnore(UUID uuid) {
         if (ignoredPlayers.contains(uuid)) {
             ignoredPlayers.remove(uuid);
             return false; // Vuelve a ser detectado
         } else {
             ignoredPlayers.add(uuid);
-            return true;  // Ahora puede usar hacks sin logs ni bloqueos
+            return true;  // Inmune a detecciones para pruebas
         }
     }
 
-    // Retorna true si el jugador fue ignorado con /bloon ignore
+    // Retorna true si el jugador está siendo ignorado
     public static boolean isIgnored(Player player) {
         return ignoredPlayers.contains(player.getUniqueId());
     }
