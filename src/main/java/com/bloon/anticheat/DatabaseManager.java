@@ -1,5 +1,7 @@
 package com.bloon.anticheat;
 
+import org.bukkit.Bukkit;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,7 +25,6 @@ public class DatabaseManager {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:" + dataFolder.getAbsolutePath());
 
-            // Crear tabla de sanciones globales
             String sql = "CREATE TABLE IF NOT EXISTS sanctions ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "uuid TEXT NOT NULL,"
