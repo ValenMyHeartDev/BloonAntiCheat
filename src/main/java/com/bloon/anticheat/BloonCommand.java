@@ -37,6 +37,7 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§e/bloon globals §7- Historial global de sanciones.");
             sender.sendMessage("§e/bloon banear §7- Abre el menú para sancionar jugadores.");
             sender.sendMessage("§e/bloon ignore <jugador> §7- Ignora o audita a un jugador.");
+            sender.sendMessage("§e/bloon freeze <jugador> §7- Congela a un jugador para revisión.");
             return true;
         }
 
@@ -91,6 +92,24 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("freeze")) {
+            if (args.length < 2) {
+                sender.sendMessage("§cUso correcto: /bloon freeze <jugador>");
+                return true;
+            }
+
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) {
+                sender.sendMessage("§c[BloonAC] El jugador no está conectado.");
+                return true;
+            }
+
+            target.sendTitle("§c§l¡CONGELADO!", "§eEntra a Discord para revisión de hacks.", 10, 70, 20);
+            target.sendMessage("§c§l¡Has sido congelado por un administrador para revisión de pantalla!");
+            sender.sendMessage("§a[BloonAC] Has congelado a §e" + target.getName() + " §apara revisión.");
+            return true;
+        }
+
         sender.sendMessage("§cComando desconocido. Usa §e/bloon help§c.");
         return true;
     }
@@ -119,7 +138,8 @@ public class BloonCommand implements CommandExecutor, TabCompleter {
             completions.add("globals");
             completions.add("banear");
             completions.add("ignore");
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("ignore")) {
+            completions.add("freeze");
+        } else if (args.length == 2 && (args[0].equalsIgnoreCase("ignore") || args[0].equalsIgnoreCase("freeze"))) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 completions.add(p.getName());
             }
