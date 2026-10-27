@@ -20,20 +20,12 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // --- Módulos de Movimiento y Física ---
-        pm.registerEvents(new SpeedCheck(plugin), plugin);
-        pm.registerEvents(new NoFallCheck(plugin), plugin);
-        pm.registerEvents(new JesusCheck(plugin), plugin);
-
-        // --- Módulos de Combate ---
+        // --- Módulos de Combate y Jugador Verificados ---
         pm.registerEvents(new CriticalsCheck(plugin), plugin);
         pm.registerEvents(new TriggerCheck(plugin), plugin);
         pm.registerEvents(new ReachCheck(plugin), plugin);
         pm.registerEvents(new KillAuraCheck(plugin), plugin);
-
-        // --- Módulos de Jugador y Paquetes ---
         pm.registerEvents(new FastEatCheck(plugin), plugin);
-        pm.registerEvents(new TimerCheck(plugin), plugin);
 
         plugin.getLogger().info("[BloonAC] ¡Todos los módulos de seguridad cargados exitosamente!");
     }
