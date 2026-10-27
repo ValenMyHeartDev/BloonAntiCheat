@@ -1,109 +1,120 @@
-# ===================================================
-#           BLOON ANTICHEAT V1 - CONFIG
-# ===================================================
+# ==============================================================================
+#                 BLOON ANTICHEAT (BloonAC) - 
+# ==============================================================================
+# Configuración calibrada para detección superior y control total de servidores.
+# Todos los módulos ejecutan sanciones y comandos integrados con el sistema GUI.
 
 settings:
-  prefix: "&8[&cBloonAC&8]"
-  debug-mode: false
+  prefix: "&8[&cBloonAC&8] "
+  alerts-permission: "bloon.alerts"
+  admin-permission: "bloon.admin"
+  
+  # Si es 'true', los administradores con OP activarán los checks a menos que usen /bloon ignore
+  check-op-players: true
+  
+  # Si el TPS del servidor cae por debajo de este límite, el anticheat relaja temporalmente las comprobaciones
+  min-tps-threshold: 16.5
 
-# Configuración global de castigos y umbrales de advertencia
-punishments:
-  triggerbot:
-    enabled: true
-    action: "kick %player% &c[BloonAC] Uso de TriggerBot detectado"
-  killaura:
-    enabled: true
-    action: "kick %player% &c[BloonAC] Uso de KillAura / Reach detectado"
-  fly:
-    enabled: true
-    action: "kick %player% &c[BloonAC] Vuelo ilegal detectado"
-
-# ---------------------------------------------------
-# MÓDULOS DE VERIFICACIÓN Y HACKS
-# ---------------------------------------------------
+# ==============================================================================
+# MÓDULOS Y COMPROBACIONES (CHECKS)
+# ==============================================================================
 checks:
-  # 1. Combate y PvP Moderno
+
+  # --------------------------------------------------------------------------
+  # 1. COMBAT CHECKS (Combate, Ayudas de mira y Golpes)
+  # --------------------------------------------------------------------------
   combat:
-    killaura: true
-    aimassist: true
-    autoclicker:
-      enabled: true
-      max-cps: 16
     reach:
       enabled: true
-      max-distance: 3.8
-    velocity: true
-    antiknockback: true
-    criticals: true
-    triggerbot: true
-    crystalaura: true
-    anchoraura: true
-    bedaura: true
-    shieldbreak: true
-    autototem: true
-    autoarmor: true
+      max-reach-distance: 3.05
+      max-violations: 10
+      punishment-command: "bloon banear %player%"
+      
+    killaura:
+      enabled: true
+      max-yaw-rate: 175.0
+      check-multi-target: true
+      max-violations: 8
+      punishment-command: "bloon banear %player%"
+      
+    autoclicker:
+      enabled: true
+      max-cps: 18
+      detect-consistency: true
+      max-violations: 12
+      punishment-command: "bloon banear %player%"
+      
+    criticals:
+      enabled: true
+      strict-ground-check: true
+      max-violations: 6
+      punishment-command: "bloon banear %player%"
+      
+    triggerbot:
+      enabled: true
+      min-aim-delay-ms: 45
+      max-violations: 7
+      punishment-command: "bloon banear %player%"
 
-  # 2. Movimiento y Física (Fly, Speed, Scaffold, etc.)
+  # --------------------------------------------------------------------------
+  # 2. MOVEMENT CHECKS (Movimiento, Velocidad y Física)
+  # --------------------------------------------------------------------------
   movement:
     fly:
       enabled: true
-      strict-mode: true
-    speed: true
-    timer: true
-    nofall: true
-    step: true
-    longjump: true
-    spider: true
-    phase: true
-    noslow: true
-    scaffold: true
-    blink: true
-    packetfly: true
+      max-air-ticks: 12
+      max-violations: 8
+      punishment-command: "bloon banear %player%"
+      
+    speed:
+      enabled: true
+      max-ground-speed: 0.33
+      account-for-ice: true
+      max-violations: 10
+      punishment-command: "bloon banear %player%"
+      
+    clicktp:
+      enabled: true
+      max-teleport-distance-squared: 12.0
+      max-violations: 3
+      punishment-command: "bloon banear %player%"
+      
+    nofall:
+      enabled: true
+      force-damage: true
+      min-fall-distance: 3.0
+      max-violations: 5
+      punishment-command: "bloon banear %player%"
+      
+    jesus:
+      enabled: true
+      cancel-water-walk: true
+      max-violations: 6
+      punishment-command: "bloon banear %player%"
 
-  # 3. Interacciones y Jugador
+  # --------------------------------------------------------------------------
+  # 3. PLAYER CHECKS (Interacciones, Consumo y Paquetes)
+  # --------------------------------------------------------------------------
   player:
-    fastplace: true
-    fastbreak: true
-    nuker: true
-    xray: true
-    freecam: true
+    fasteat:
+      enabled: true
+      min-consume-time-ms: 1400
+      max-violations: 5
+      punishment-command: "bloon banear %player%"
+      
+    timer:
+      enabled: true
+      max-timer-speed: 1.08
+      max-violations: 8
+      punishment-command: "bloon banear %player%"
 
-  # 4. Exploits y Seguridad de Paquetes (Anti-Crash y Anticheat Bypass)
-  exploits:
-    badpackets: true
-    pingspoof: true
-    groundspoof: true
-    rotationspoof: true
-    crash-exploit: true
-    packet-crash: true
-    nbt-exploit: true
-    chunk-crash: true
-    login-flood: true
-    dupe-exploit: true
-    command-injection: true
-    anticheat-bypass: true
-
-  # 5. Visuales / Cliente (Opcionales)
-  visuals:
-    playeresp: true
-    tracers: true
-
-# ---------------------------------------------------
-# MENÚ DE SANCIONES Y GUI DE ADMINISTRACIÓN (/bloon sanciones)
-# ---------------------------------------------------
-sanctions:
-  kick_player:
-    name: "&eExpulsar Jugador"
-    material: FEATHER
-    lore:
-      - "&7Haz clic para expulsar"
-      - "&7al jugador seleccionado."
-    command: "kick %player% &cExpulsado por los administradores."
-    
-  ban_player:
-    name: "&cBanear Permanentemente"
-    material: NETHERITE_SWORD
-    lore:
-      - "&7Aplica un baneo permanente"
-      - "&7por uso de hacks confirmados [V]."
-    command: "ban %player% &c[BloonAC] Bateado por uso de trampas."
+# ==============================================================================
+# SISTEMA DE SANCIONES Y AUDITORÍA
+# ==============================================================================
+sanctions-system:
+  # Permitir baneo automático por IP y Nombre al alcanzar el límite de violaciones (VL)
+  auto-ip-ban: true
+  
+  # Duración por defecto si se ejecuta el castigo automático por umbral de violaciones
+  default-ban-duration: "30 Días"
+  default-ban-reason: "Detección Automática (BloonAC)"
