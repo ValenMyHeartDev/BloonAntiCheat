@@ -20,9 +20,7 @@ public class CheckManager {
     public void registerAllChecks() {
         PluginManager pm = Bukkit.getPluginManager();
 
-        // --- Módulos de Movimiento ---
-        pm.registerEvents(new FlyCheck(plugin), plugin);
-        pm.registerEvents(new ClickTPCheck(plugin), plugin);
+        // --- Módulos de Movimiento y Física ---
         pm.registerEvents(new SpeedCheck(plugin), plugin);
         pm.registerEvents(new NoFallCheck(plugin), plugin);
         pm.registerEvents(new JesusCheck(plugin), plugin);
