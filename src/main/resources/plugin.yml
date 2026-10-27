@@ -3,13 +3,19 @@ version: 1.0.0
 main: com.bloon.anticheat.Main
 api-version: '1.20'
 author: Bloon
-description: Bloon AntiCheat V1 - basic anti-cheat management tools
+description: Premier professional-grade administration and detection suite for Minecraft servers.
+
 commands:
   bloon:
-    description: Bloon AntiCheat administration command
-    usage: /bloon <sanciones|reload>
+    description: Comando principal de administración de Bloon AntiCheat.
+    usage: /bloon <help|menu|sanciones|globals|banear|ignore|freeze|reload>
     permission: bloon.admin
+    permission-message: "§c[BloonAC] No tienes permisos para ejecutar este comando."
+
 permissions:
   bloon.admin:
-    description: Allows administration of Bloon AntiCheat
+    description: Permite el acceso total a la administración, comandos y GUIs de BloonAC.
+    default: op
+  bloon.alerts:
+    description: Permite recibir alertas e infracciones (VL) de jugadores en tiempo real.
     default: op
