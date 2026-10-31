@@ -36,37 +36,24 @@ public class JesusCheck implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        Material currentBlock = to.getBlock().getType();
-        Material belowBlock = to.clone().subtract(0, 0.1, 0).getBlock().getType();
+        Material blockBelow = to.clone().subtract(0, 0.1, 0).getBlock().getType();
+        boolean isLiquid = blockBelow == Material.WATER || blockBelow == Material.LAVA || blockBelow.name().contains("WATER");
 
-        boolean isLiquid = currentBlock == Material.WATER || currentBlock == Material.LAVA || 
-                           belowBlock == Material.WATER || belowBlock == Material.LAVA;
+        if (isLiquid && to.getY() % 1.0 == 0.0) {
+            if (config.getBoolean("checks.movement.jesus.cancel-water-walk", true)) {
+                event.setCancelled(true);
+                player.teleport(event.getFrom());
+            }
 
-        if (isLiquid && player.getVelocity().getY() >= -0.1) {
-            if (to.getY() % 1.0 == 0.0 || to.getY() % 0.5 == 0.0) {
-                if (config.getBoolean("checks.movement.jesus.cancel-water-walk", true)) {
-                    event.setCancelled(true);
-                    player.teleport(event.getFrom());
-                }
+            UUID uuid = player.getUniqueId();
+            int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
+            violationsMap.put(uuid, currentVL);
 
-                UUID uuid = player.getUniqueId();
-                int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
-                violationsMap.put(uuid, currentVL);
-
-                String alertMessage = "§c[BloonAC] " + player.getName() + " falló Jesus (Caminar sobre agua/lava) §8[VL: " + currentVL + "]";
-
-                for (Player staff : Bukkit.getOnlinePlayers()) {
-                    if (staff.hasPermission(config.getString("settings.alerts-permission", "bloon.alerts"))) {
-                        staff.sendMessage(alertMessage);
-                    }
-                }
-
-                int maxVL = config.getInt("checks.movement.jesus.max-violations", 6);
-                if (currentVL >= maxVL) {
-                    String cmd = config.getString("checks.movement.jesus.punishment-command", "bloon banear %player%");
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
-                    violationsMap.put(uuid, 0);
-                }
+            int maxVL = config.getInt("checks.movement.jesus.max-violations", 6);
+            if (currentVL >= maxVL) {
+                String cmd = config.getString("checks.movement.jesus.punishment-command", "bloon banear %player%");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
+                violationsMap.put(uuid, 0);
             }
         }
     }
