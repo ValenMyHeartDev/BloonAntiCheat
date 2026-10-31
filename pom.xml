@@ -21,7 +21,14 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
-        <!-- Repositorio JitPack (Oficial para PacketEvents y SQLite) -->
+
+        <!-- Repositorio Oficial de CodeMC (PacketEvents) -->
+        <repository>
+            <id>codemc-releases</id>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
+
+        <!-- Repositorio JitPack para SQLite -->
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
@@ -37,7 +44,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PacketEvents API vía JitPack (Estable y sin caídas de servidor) -->
+        <!-- PacketEvents Spigot (Vía CodeMC) -->
         <dependency>
             <groupId>com.github.retrooper.packetevents</groupId>
             <artifactId>spigot</artifactId>
@@ -45,7 +52,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- SQLite Driver para Persistencia de Sanciones -->
+        <!-- SQLite Driver -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
@@ -68,7 +75,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Plugin Shade para empaquetar SQLite en el JAR final -->
+            <!-- Plugin Shade para incluir SQLite en el JAR final -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
