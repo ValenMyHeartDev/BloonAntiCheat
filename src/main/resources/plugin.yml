@@ -4,6 +4,7 @@ main: com.bloon.anticheat.Main
 api-version: '1.20'
 author: Bloon
 description: Premier professional-grade administration and detection suite for Minecraft servers.
+depend: [packetevents]
 
 commands:
   bloon:
