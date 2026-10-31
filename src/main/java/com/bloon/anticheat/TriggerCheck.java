@@ -15,6 +15,7 @@ import java.util.UUID;
 public class TriggerCheck implements Listener {
 
     private final Main plugin;
+    private final Map<UUID, Long> lastAttackTime = new HashMap<>();
     private final Map<UUID, Integer> violationsMap = new HashMap<>();
 
     public TriggerCheck(Main plugin) {
@@ -31,15 +32,32 @@ public class TriggerCheck implements Listener {
         FileConfiguration config = plugin.getConfig();
         if (!config.getBoolean("checks.combat.triggerbot.enabled", true)) return;
 
-        // Si ataca exactamente en el instante en que la entidad entra en la mira
         UUID uuid = player.getUniqueId();
-        int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
-        
-        if (currentVL > config.getInt("checks.combat.triggerbot.max-violations", 7)) {
-            event.setCancelled(true);
-            String cmd = config.getString("checks.combat.triggerbot.punishment-command", "bloon banear %player%");
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
-            violationsMap.put(uuid, 0);
+        long now = System.currentTimeMillis();
+        long last = lastAttackTime.getOrDefault(uuid, 0L);
+        long diff = now - last;
+
+        long minDelay = config.getLong("checks.combat.triggerbot.min-aim-delay-ms", 45);
+
+        if (last != 0 && diff < minDelay) {
+            int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
+            violationsMap.put(uuid, currentVL);
+
+            String alert = "§c[BloonAC] " + player.getName() + " falló TriggerBot (Delay: " + diff + "ms) §8[VL: " + currentVL + "]";
+            for (Player staff : Bukkit.getOnlinePlayers()) {
+                if (staff.hasPermission(config.getString("settings.alerts-permission", "bloon.alerts"))) {
+                    staff.sendMessage(alert);
+                }
+            }
+
+            int maxVL = config.getInt("checks.combat.triggerbot.max-violations", 7);
+            if (currentVL >= maxVL) {
+                String cmd = config.getString("checks.combat.triggerbot.punishment-command", "bloon banear %player%");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName()));
+                violationsMap.put(uuid, 0);
+            }
         }
+
+        lastAttackTime.put(uuid, now);
     }
 }
