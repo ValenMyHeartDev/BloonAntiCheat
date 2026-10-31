@@ -21,12 +21,7 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
-        <!-- Repositorio Oficial de PacketEvents (RetroOper) -->
-        <repository>
-            <id>retrooper-repo</id>
-            <url>https://repo.retrooper.com/releases/</url>
-        </repository>
-        <!-- Repositorio JitPack para SQLite y librerías auxiliares -->
+        <!-- Repositorio JitPack (Oficial para PacketEvents y SQLite) -->
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
@@ -42,10 +37,10 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PacketEvents API (Procesamiento asíncrono de paquetes a nivel de red) -->
+        <!-- PacketEvents API vía JitPack (Estable y sin caídas de servidor) -->
         <dependency>
-            <groupId>com.github.retrooper</groupId>
-            <artifactId>packetevents-spigot</artifactId>
+            <groupId>com.github.retrooper.packetevents</groupId>
+            <artifactId>spigot</artifactId>
             <version>2.2.1</version>
             <scope>provided</scope>
         </dependency>
@@ -73,7 +68,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Plugin Shade para incluir dependencias necesarias en el JAR final -->
+            <!-- Plugin Shade para empaquetar SQLite en el JAR final -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
