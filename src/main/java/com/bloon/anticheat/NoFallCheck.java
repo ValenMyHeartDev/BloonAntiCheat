@@ -26,7 +26,7 @@ public class NoFallCheck implements Listener {
         Player player = event.getPlayer();
 
         if (CheckManager.isIgnored(player)) return;
-        if (player.getAllowFlight() || player.isInsideVehicle() || player.isGliding()) return;
+        if (player.getAllowFlight() || player.isInsideVehicle() || player.isGliding() || player.isSwimming()) return;
 
         FileConfiguration config = plugin.getConfig();
         if (!config.getBoolean("checks.movement.nofall.enabled", true)) return;
@@ -34,23 +34,17 @@ public class NoFallCheck implements Listener {
         double fallDistance = player.getFallDistance();
         double minFall = config.getDouble("checks.movement.nofall.min-fall-distance", 3.0);
 
-        if (fallDistance > minFall && player.isOnGround() && !player.getLocation().getBlock().getType().name().contains("WATER")) {
+        boolean isWater = player.getLocation().getBlock().getType().name().contains("WATER") || 
+                          player.getLocation().getBlock().getType().name().contains("LAVA");
+
+        if (fallDistance > minFall && player.isOnGround() && !isWater) {
             if (config.getBoolean("checks.movement.nofall.force-damage", true)) {
-                player.damage(fallDistance / 2.0);
+                player.damage(fallDistance / 2.5);
             }
 
             UUID uuid = player.getUniqueId();
             int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
             violationsMap.put(uuid, currentVL);
-
-            String alertMessage = "§c[BloonAC] " + player.getName() + " falló NoFall (Caída omitida de " 
-                    + String.format("%.1f", fallDistance) + "m) §8[VL: " + currentVL + "]";
-
-            for (Player staff : Bukkit.getOnlinePlayers()) {
-                if (staff.hasPermission(config.getString("settings.alerts-permission", "bloon.alerts"))) {
-                    staff.sendMessage(alertMessage);
-                }
-            }
 
             int maxVL = config.getInt("checks.movement.nofall.max-violations", 5);
             if (currentVL >= maxVL) {
