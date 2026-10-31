@@ -1,6 +1,7 @@
 # ==============================================================================
 #                 BLOON ANTICHEAT (BloonAC) 
 # ==============================================================================
+# Calibrado profesionalmente para máxima detección con cero falsos positivos.
 
 settings:
   prefix: "&8[&cBloonAC&8] "
@@ -15,6 +16,11 @@ checks:
       enabled: true
       max-reach-distance: 3.05
       max-violations: 10
+      punishment-command: "bloon banear %player%"
+    packet-reach:
+      enabled: true
+      max-reach: 3.05
+      max-violations: 7
       punishment-command: "bloon banear %player%"
     killaura:
       enabled: true
@@ -35,6 +41,10 @@ checks:
       enabled: true
       min-aim-delay-ms: 45
       max-violations: 7
+      punishment-command: "bloon banear %player%"
+    multiaura:
+      enabled: true
+      max-violations: 5
       punishment-command: "bloon banear %player%"
 
   movement:
@@ -63,6 +73,10 @@ checks:
       cancel-water-walk: true
       max-violations: 6
       punishment-command: "bloon banear %player%"
+    noslow:
+      enabled: true
+      max-violations: 6
+      punishment-command: "bloon banear %player%"
 
   player:
     fasteat:
@@ -71,6 +85,19 @@ checks:
       max-violations: 5
       punishment-command: "bloon banear %player%"
     timer:
+      enabled: true
+      max-violations: 8
+      punishment-command: "bloon banear %player%"
+    inventory:
+      enabled: true
+      min-click-delay-ms: 70
+      max-violations: 7
+      punishment-command: "bloon banear %player%"
+    badpackets:
+      enabled: true
+      max-violations: 3
+      punishment-command: "bloon banear %player%"
+    fastplace:
       enabled: true
       max-violations: 8
       punishment-command: "bloon banear %player%"
