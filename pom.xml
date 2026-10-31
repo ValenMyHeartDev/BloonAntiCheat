@@ -3,32 +3,67 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.bloon</groupId>
     <artifactId>BloonAntiCheat</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>Bloon AntiCheat V1</name>
+
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <repositories>
+        <!-- Repositorio Oficial de PaperMC -->
         <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+        <!-- Repositorio Oficial de PacketEvents (RetroOper) -->
+        <repository>
+            <id>retrooper-repo</id>
+            <url>https://repo.retrooper.com/releases/</url>
+        </repository>
+        <!-- Repositorio JitPack para SQLite y librerías auxiliares -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
+
     <dependencies>
+        <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.20.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- PacketEvents API (Procesamiento asíncrono de paquetes a nivel de red) -->
+        <dependency>
+            <groupId>com.github.retrooper</groupId>
+            <artifactId>packetevents-spigot</artifactId>
+            <version>2.2.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- SQLite Driver para Persistencia de Sanciones -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
+
     <build>
         <finalName>BloonAntiCheat-V1</finalName>
+        <defaultGoal>clean package</defaultGoal>
         <plugins>
+            <!-- Plugin de Compilación Java 17 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -36,6 +71,24 @@
                 <configuration>
                     <release>17</release>
                 </configuration>
+            </plugin>
+
+            <!-- Plugin Shade para incluir dependencias necesarias en el JAR final -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
