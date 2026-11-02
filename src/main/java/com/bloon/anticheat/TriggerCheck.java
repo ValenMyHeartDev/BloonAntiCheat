@@ -34,16 +34,12 @@ public class TriggerCheck implements Listener {
         FileConfiguration config = plugin.getConfig();
         if (!config.getBoolean("checks.combat.triggerbot.enabled", true)) return;
 
-        // Vector de la dirección de la vista del jugador
         Vector playerDir = player.getEyeLocation().getDirection().normalize();
-        // Vector desde los ojos del jugador hacia la posición del objetivo
         Vector targetDir = target.getLocation().toVector().subtract(player.getEyeLocation().toVector()).normalize();
 
-        // Producto escalar (Dot Product): mide qué tan alineada está la mira con el objetivo (1.0 es centro exacto)
         double dotProduct = playerDir.dot(targetDir);
         double minPrecision = config.getDouble("checks.combat.triggerbot.min-precision", 0.35);
 
-        // Si el jugador asesta un golpe pero su ángulo de visión estaba demasiado desviado del objetivo
         if (dotProduct < minPrecision) {
             UUID uuid = player.getUniqueId();
             int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
@@ -69,8 +65,3 @@ public class TriggerCheck implements Listener {
     }
 }
 ```[cite: 3]
-
-### ¿Qué se ha corregido en esta versión?
-1. **Validación de Vector y Ángulo:** Se calcula el producto escalar (`dotProduct`) entre la dirección a donde mira el usuario y la posición real del objetivo[cite: 3]. Esto detecta si un cliente envía clics automáticos sin estar mirando al contrincante.
-2. **Parámetro de configuración limpio:** Utiliza `checks.combat.triggerbot.min-precision` para definir el umbral de tolerancia. Si lo configuras muy bajo (ej. `0.2`), tolerará giros amplios; si lo pones más alto (ej. `0.5`), exigirá que la mira esté muy centrada.
-3. **Integración con Permisos y Castigos:** Al igual que el Reach, notifica a los jugadores con permisos de staff (`bloon.alerts`) y ejecuta el comando de sanción automático al alcanzar el máximo de infracciones (VL)[cite: 3].
