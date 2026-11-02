@@ -45,8 +45,7 @@ public class TriggerCheck implements Listener {
             int currentVL = violationsMap.getOrDefault(uuid, 0) + 1;
             violationsMap.put(uuid, currentVL);
 
-            String alert = "§c[BloonAC] " + player.getName() + " falló TriggerBot (Ángulo anómalo: " 
-                    + String.format("%.2f", dotProduct) + ") §8[VL: " + currentVL + "]";
+            String alert = "§c[BloonAC] " + player.getName() + " falló TriggerBot §8[VL: " + currentVL + "]";
             
             String alertsPerm = config.getString("settings.alerts-permission", "bloon.alerts");
             for (Player staff : Bukkit.getOnlinePlayers()) {
@@ -65,3 +64,5 @@ public class TriggerCheck implements Listener {
     }
 }
 ```[cite: 3]
+
+Guarda el archivo asegurándote de que no quede absolutamente nada por debajo de la última llave de cierre `}`. Con esto Maven compilará correctamente sin errores.
