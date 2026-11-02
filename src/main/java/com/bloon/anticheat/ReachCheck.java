@@ -65,7 +65,5 @@ public class ReachCheck implements Listener {
 }
 ```[cite: 4]
 
-### Verificación:
-1. Guarda el archivo asegurándote de que la codificación de tu editor esté en **UTF-8**.
-2. Vuelve a ejecutar `mvn clean package` en tu terminal. 
-*Verificación exitosa:* La consola de Maven debe mostrar `BUILD SUCCESS` sin rastro de caracteres ilegales en la línea 66 o 68.
+### Consejo adicional si persiste:
+Si tu editor de código (como Eclipse, IntelliJ o VS Code) sigue marcando error en esas líneas específicas, selecciona las líneas 65 a la 75 de tu archivo, bórralas manualmente con la tecla Backspace/Supr y vuelve a escribirlas a mano o usa la opción de pegar como texto plano (*Paste as Plain Text*).
