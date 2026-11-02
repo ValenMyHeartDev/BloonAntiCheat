@@ -65,4 +65,4 @@ public class TriggerCheck implements Listener {
 }
 ```[cite: 3]
 
-Guarda el archivo asegurándote de que la última línea escrita sea la última llave `}` y vuelve a ejecutar `mvn clean package`.
+Revisa que la última línea del archivo termine exactamente en la llave `}` del bloque anterior y que no quede ninguna línea vacía extra con símbolos invisibles por debajo. Vuelve a ejecutar `mvn clean package` y obtendrás el `BUILD SUCCESS`.
