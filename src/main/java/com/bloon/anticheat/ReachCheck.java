@@ -65,8 +65,7 @@ public class ReachCheck implements Listener {
 }
 ```[cite: 4]
 
-### Pasos para verificar que quede bien:
-1. Abre tu IDE (como IntelliJ o Eclipse) o tu editor de texto.
-2. Selecciona todo el contenido actual de `ReachCheck.java` y bórralo por completo.
-3. Copia el bloque de código de arriba utilizando el botón de copiado directo y pégalo.
-4. Guarda el archivo verificando que la codificación sea **UTF-8** y vuelve a compilar con `mvn clean package`.
+### Verificación:
+1. Guarda el archivo asegurándote de que la codificación de tu editor esté en **UTF-8**.
+2. Vuelve a ejecutar `mvn clean package` en tu terminal. 
+*Verificación exitosa:* La consola de Maven debe mostrar `BUILD SUCCESS` sin rastro de caracteres ilegales en la línea 66 o 68.
