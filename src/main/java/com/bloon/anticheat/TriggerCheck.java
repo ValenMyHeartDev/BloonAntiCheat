@@ -65,4 +65,4 @@ public class TriggerCheck implements Listener {
 }
 ```[cite: 3]
 
-Guarda el archivo asegurándote de que no quede absolutamente nada por debajo de la última llave de cierre `}`. Con esto Maven compilará correctamente sin errores.
+Guarda el archivo asegurándote de que la última línea escrita sea la última llave `}` y vuelve a ejecutar `mvn clean package`.
