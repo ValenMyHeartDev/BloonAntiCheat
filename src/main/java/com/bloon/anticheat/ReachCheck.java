@@ -65,7 +65,8 @@ public class ReachCheck implements Listener {
 }
 ```[cite: 4]
 
-### Pasos para aplicarlo:
-1. Borra todo el texto actual dentro de `ReachCheck.java`.
-2. Pega el bloque de código de arriba asegurándote de guardarlo con codificación **UTF-8**.
-3. Vuelve a ejecutar `mvn clean package` en tu terminal para compilar el proyecto sin errores.
+### Pasos para verificar que quede bien:
+1. Abre tu IDE (como IntelliJ o Eclipse) o tu editor de texto.
+2. Selecciona todo el contenido actual de `ReachCheck.java` y bórralo por completo.
+3. Copia el bloque de código de arriba utilizando el botón de copiado directo y pégalo.
+4. Guarda el archivo verificando que la codificación sea **UTF-8** y vuelve a compilar con `mvn clean package`.
